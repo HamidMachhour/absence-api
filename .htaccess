@@ -1,0 +1,21 @@
+# Disable directory browsing
+Options -Indexes
+
+# Follow symbolic links
+Options FollowSymlinks
+
+# Allow overriding of all directives
+AllowOverride All
+
+# Prevent access to the application's folders
+<FilesMatch "^(app|bootstrap|config|database|lang|node_modules|public|resources|storage|tests)$">
+ Order Deny,Allow
+ Deny from all
+</FilesMatch>
+
+# Rewrite all requests to the index.php file
+RewriteEngine On
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.*)$ public/index.php [L]
+

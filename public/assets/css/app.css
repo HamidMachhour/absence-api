@@ -1,0 +1,55 @@
+
+.card {
+    position: relative;
+    width: 85.60mm; /* Adjust the width according to bank card dimensions */
+    /*height: 53.98mm; /* Adjust the height according to bank card dimensions */
+    height: auto;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    margin: 3px;
+    overflow: hidden;
+}
+
+.background {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: url('../images/printcard.svg'); /* Replace 'path_to_your_background_image.jpg' with the actual path to your background image */
+    background-size: cover;
+    background-position: center;
+    opacity: 0.5; /* Adjust opacity as needed */
+}
+
+.card-content {
+    position: relative;
+    z-index: 1;
+    padding: 10px;
+    /*color: white; /* Set text color to white for better readability on the background */
+}
+
+.card-body {
+    padding: 0;
+}
+
+.student-img {
+    width: 25mm;
+    /* Adjust the image size */
+    height: 25mm;
+    /* Adjust the image size */
+    border-radius: 50%;
+    margin-right: 2px;
+}
+
+.info {
+    margin-bottom: 2px;
+    text-align: center;
+}
+
+.qr-code {
+    width: 40mm; /* Take full width of the column */
+    height: 40mm; /* Let the height adjust proportionally */
+    /* Adjust the QR code size */
+    float: left;
+}

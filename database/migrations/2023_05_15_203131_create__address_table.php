@@ -22,7 +22,7 @@ class CreateAddressTable extends Migration
             $table->text('location');
             $table->text('phones');
             $table->string('email');
-            $table->text('userId');
+            $table->string('userId',255);
             $table->timestamp('deleted_at')->nullable();
 
             $table->timestamps();

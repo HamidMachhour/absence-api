@@ -6,7 +6,7 @@
 
 namespace App\Models;
 
-use Carbon\Carbon;
+use DateTime;
 use Illuminate\Database\Eloquent\Model;
 
 /**
@@ -18,9 +18,9 @@ use Illuminate\Database\Eloquent\Model;
  * @property string|null $name
  * @property string|null $token
  * @property string $abilities
- * @property Carbon $last_used_at
- * @property Carbon $created_at
- * @property Carbon $updated_at
+ * @property DateTime $last_used_at
+ * @property DateTime $created_at
+ * @property DateTime $updated_at
  *
  * @package App\Models
  */

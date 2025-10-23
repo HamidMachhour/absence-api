@@ -1,29 +1,68 @@
-<x-layout>
-{{--     @if (!Auth::check())
-        @include('partials._hero')
-    @endif --}}
-    <x-card class="flex flex-row flex-wrap justify-center bg-orange-500 gap-2 mb-2">
-    <x-classeinf-card :classe="$classe" />
-    </x-card>
+@extends('layouts.master')
 
-    <x-card class="p-10 max-w-lg mx-auto">
-        <header class="text-center">
-          <h2 class="text-2xl font-bold uppercase mb-1">Import students</h2>
-        </header>
+@section('title')
+     {{__('vocab.import')}} {{__('vocab.class')}}
+@endsection
 
-        <form method="POST" action="{{ route('classes.import', ['classe' => $classe->id]) }}" enctype="multipart/form-data">
-          @csrf
-          <div class="mb-6">
-            <input type="file" name="file" class="form-control">
-            <button type="submit" class="bg-orange-600 text-white rounded py-2 px-4 hover:bg-green-700 mt-2">
-                Import
-              </button>
+@section('css')
+@endsection
 
-            @error('file')
-            <p class="text-red-500 text-xs mt-1">{{$message}}</p>
-            @enderror
-          </div>
+@section('main-page')
+    <a href="{{ route('classes.manage') }}">{{__('vocab.my_classes')}}</a>
+@endsection
 
-        </form>
-      </x-card>
-</x-layout>
+@section('page-title')
+{{__('vocab.import')}} {{__('vocab.class')}}
+@endsection
+
+@section('page')
+{{__('vocab.import')}} {{__('vocab.class')}}
+@endsection
+
+@section('content')
+    <section class="content">
+        <div class="container-fluid">
+            <div class="row">
+                <!-- left column -->
+                <div class="col-md-12">
+                    <div class="card card-primary">
+                        <div class="card-header">
+                            <div class="card-title">{{__('vocab.import')}} {{__('vocab.class')}}</div>
+                            @error('message')
+                                <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                            @enderror
+                        </div>
+                        <div class='card-body'>
+                            <form method="POST" action="{{ route('classes.import', ['classe' => $classe->id]) }}"
+                                enctype="multipart/form-data">
+                                @csrf
+
+                                <div class="form-group ">
+                                    <input type="file" class="form-control " name="file" accept=".csv" required/>
+
+                                    @error('file')
+                                        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                                    @enderror
+                                </div>
+
+                                <div class="card-footer ">
+                                    <a href="javascript:history.back()" class="btn btn-outline-gray">
+                                        {{__('vocab.go_back')}}
+                                    </a>
+
+                                    <button type="submit" class="btn btn-outline-primary">
+                                        {{__('vocab.import')}}
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <x-flash-message />
+    @endsection
+
+    @section('scripts')
+    @endsection

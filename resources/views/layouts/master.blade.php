@@ -3,18 +3,12 @@
 
 @include('layouts.header')
 
-<body class="hold-transition sidebar-mini layout-fixed">
+<body>
     <div class="wrapper">
-
         <!-- Preloader -->
-       @yield('preload')
-
+        @yield('preload')
         @include('layouts.headerbar')
-
-        @include('layouts.sidebar')
-
-        <!-- Content Wrapper. Contains page content -->
-        <div class="content-wrapper">
+        <div class="content-wrapper {{ App::getLocale() == 'ar' ? 'text-right' : 'text-left' }}">
             <!-- Content Header (Page header) -->
             @include('layouts.contentheader')
             <!-- /.content-header -->
@@ -24,16 +18,13 @@
             <!-- /.content -->
         </div>
         <!-- /.content-wrapper -->
-        @include('layouts.footerbar')
 
-        <!-- Control Sidebar -->
-        <aside class="control-sidebar control-sidebar-dark">
-            <!-- Control sidebar content goes here -->
-        </aside>
-        <!-- /.control-sidebar -->
     </div>
-    <!-- ./wrapper -->
 
+    <x-flash-message />
+    
+    @include('layouts.sidebar')
+    @include('layouts.footerbar')
     @include('layouts.footer')
 </body>
 

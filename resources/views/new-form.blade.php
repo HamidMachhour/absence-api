@@ -1,7 +1,7 @@
 @extends('layouts.master')
 
 @section('title')
-منصة ثانوية ابن هاني التأهيلية بفاس
+{{__('vocab.platform')}} {{__('vocab.absence')}} 
 @endsection
 
 @section('css')
@@ -9,10 +9,10 @@
 @endsection
 
 @section('main-page')
-<a href="{{route('home.route')}}">الرئيسية</a>
+<a href="{{route('home')}}">{{__('vocab.home')}}</a>
 @endsection
 @section('page')
-انشاء حساب جديد
+{{__('vocab.new_account')}}
 @endsection
 
 @section('content')
@@ -23,7 +23,7 @@
             <div class="col-md-12">
                 <div class="card card-primary">
                     <div class="card-header">
-                        <h3 class="card-title "> تسجيل الدخول </h3>
+                        <h3 class="card-title "> {{__('vocab.login')}} </h3>
                     </div>
 
 

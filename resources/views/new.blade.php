@@ -1,7 +1,7 @@
 @extends('layouts.master')
 
 @section('title')
-منصة ثانوية ابن هاني التأهيلية بفاس
+{{__('vocab.platform')}} {{__('vocab.absence')}} 
 @endsection
 
 @section('css')

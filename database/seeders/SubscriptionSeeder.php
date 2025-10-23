@@ -6,7 +6,8 @@ use Illuminate\Database\Seeder;
 use App\Models\Subscription;
 use App\Models\User;
 use App\Models\Plan;
-use Carbon\Carbon;
+use DateTime;
+use DateInterval;
 use Illuminate\Support\Str;
 
 class SubscriptionSeeder extends Seeder
@@ -28,14 +29,13 @@ class SubscriptionSeeder extends Seeder
             $plan = $plans->random();
 
             // Calculate the expiration date based on the plan
-            $expirationDate = Carbon::now()->addDays($plan->duration);
-
+            $expirationDate = (new DateTime())->add(new DateInterval('P' . ($plan->duration ?: 1) . 'D'));
             // Select a random status
             $status = $statuses[array_rand($statuses)];
 
             // Create the subscription
             Subscription::create([
-                'id' =>Str::uuid(),
+                'id' => Str::uuid(),
                 'userId' => $user->id,
                 'planId' => $plan->id,
                 'expire_at' => $expirationDate,
@@ -44,4 +44,3 @@ class SubscriptionSeeder extends Seeder
         }
     }
 }
-

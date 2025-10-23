@@ -1,85 +1,81 @@
 @extends('layouts.master')
 
 @section('title')
-    منصة ثانوية ابن هاني التأهيلية بفاس
+{{__('vocab.login')}}
 @endsection
 
 @section('css')
 @endsection
 
 @section('main-page')
-    <a href="{{ route('home.route') }}">الرئيسية</a>
+<a href="{{ route('home') }}">{{__('vocab.home')}}</a>
 @endsection
 
 @section('page-title')
 @endsection
 
 @section('page')
-    تسجيل الدخول
+{{__('vocab.login')}}
 @endsection
 
 @section('content')
-    <section class="content">
-        <div class="container-fluid">
-            <div class="row">
-                <!-- left column -->
-                <div class="col-md-12">
-                    <div class="card card-primary">
-                        <div class="card-header">
-                            <h3 class="card-title"> تسجيل الدخول </h3>
-                        </div>
-                        <form method="POST" action="{{ route('users.authenticate') }}">
-                            @csrf
-                            <div class='card-body'>
-                                <div class="form-group text-right">
-
-                                    <label for="email">Email البريد الالكتروني</label>
-                                    <input id='email' type="email" class="form-control text-right" name="email"
-                                        value="{{ old('email') }}" />
-                                    @error('email')
-                                        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                                    @enderror
-                                </div>
-                                <div class="form-group text-right">
-                                    <label for="password">
-                                        القن السري
-                                    </label>
-                                    <input id='password' type="password" class="form-control text-right" name="password"
-                                        value="{{ old('password') }}" />
-                                    @error('password')
-                                        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                                    @enderror
-
-                                </div>
-
-                                <div class="card-footer text-right">
-                                    <button type="submit" class="btn  btn-outline-primary">
-                                        دخول
-                                    </button>
-                                </div>
-                        </form>
-                        <div class="mt-8 text-right">
-                            <p>
-                                ليس لديك، حساب?
-                                <a href="{{ route('users.register') }}"
-                                    class="text-orange-700 hover:text-green-700">انشاء حساب جديد</a>
-                            </p>
-                        </div>
-                    </div>
+<div class="max-w-3xl mx-auto">
+    <div class="mb-6">
+        <img src="{{ asset('assets/images/app_logo.png') }}" alt="App Logo" class="mx-auto h-48 w-48">
+    </div>
+</div>
+<div class="d-flex justify-content-center align-items-center">
+    <div class="card card-primary ">
+        <div class="card-header ">
+            <a class="h3"> {{__('vocab.login')}} </a>
+        </div>
+        @error('message')
+        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+        @enderror
+        <form method="POST" action="{{ route('users.authenticate') }}">
+            @csrf
+            <div class='card-body'>
+                <div class="form-group ">
+                    <label for="email">{{__('vocab.email')}}</label>
+                    <input id='email' type="email" class="form-control " name="email"
+                        value="{{ old('email') }}" />
+                    @error('email')
+                    <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                    @enderror
                 </div>
-            </div>
-            <!--/.col (left) -->
-            <!-- right column -->
-            <div class="col-md-6">
+                <div class="form-group ">
+                    <label for="password">
+                        {{__('vocab.password')}}
+                    </label>
+                    <input id='password' type="password" class="form-control  " name="password"
+                        value="{{ old('password') }}" />
+                    @error('password')
+                    <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                    @enderror
 
-            </div>
-            <!--/.col (right) -->
+                </div>
+
+                <div class="card-footer ">
+                    <button type="submit" class="btn  btn-outline-primary">
+                        {{__('vocab.login')}}
+                    </button>
+                </div>
+        </form>
+        <div class="mt-8 ">
+            <p>
+                {{__('vocab.not_have_account')}}
+                <a href="{{ route('users.register') }}" class="text-blue-600 hover:text-gray-700">{{__('vocab.new_account')}}</a>
+            </p>
         </div>
-
+        <div class="mt-8 ">
+            <p>
+                {{__('vocab.forgot_password')}}
+            </p>
         </div>
+    </div>
+</div>
 
-        <x-flash-message />
-    @endsection
+@endsection
 
-    @section('scripts')
-    @endsection
+@section('scripts')
+@endsection

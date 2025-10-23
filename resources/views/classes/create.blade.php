@@ -1,22 +1,22 @@
 @extends('layouts.master')
 
 @section('title')
-    اضافة قسم
+    {{__('vocab.new')}} {{__('vocab.class')}}
 @endsection
 
 @section('css')
 @endsection
 
 @section('main-page')
-    <a href="{{ route('classes.manage') }}">اقسامي</a>
+    <a href="{{ route('classes.manage') }}">{{__('vocab.my_classes')}}</a>
 @endsection
 
 @section('page-title')
-    اضافة قسم
+    {{__('vocab.new')}} {{__('vocab.class')}}
 @endsection
 
 @section('page')
-    اضافة قسم
+    {{__('vocab.new')}} {{__('vocab.class')}}
 @endsection
 @section('content')
     <section class="content">
@@ -26,7 +26,7 @@
                 <div class="col-md-12">
                     <div class="card card-primary">
                         <div class="card-header">
-                            <h3 class="card-title"> انشاء قسم جديد</h3>
+                            <h3 class="card-title">  {{__('vocab.new')}} {{__('vocab.class')}} </h3>
                             @error('message')
                                 <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
                             @enderror
@@ -36,45 +36,75 @@
 
                             <form method="POST" action="{{ route('classes.store') }}">
                                 @csrf
-                                <div class="form-group text-right">
-                                    <label for="name">الاسم</label>
-                                    <input type="text" class="form-control text-right" name="name"
-                                        placeholder="مثال: الثانية ع ح ا 1" value="{{ old('name') }}" />
+                                <div class="form-group ">
+                                    <label for="name">{{__('vocab.classe_name')}}</label>
+                                    <input type="text" class="form-control " name="name"
+                                        placeholder="{{__('vocab.class_placeholder')}}" value="{{ old('name') }}" />
 
                                     @error('name')
                                         <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
                                     @enderror
                                 </div>
+                                
+                                <div class="form-group ">
+                                    <label for="nameZ">{{__('vocab.classe_name_z')}}</label>
+                                    <input type="text" class="form-control " name="nameZ"
+                                        placeholder="{{__('vocab.class_placeholder')}}" value="{{ old('nameZ') }}" />
 
-                                <div class="form-group text-right">
+                                    @error('nameZ')
+                                        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                                    @enderror
+                                </div>
+
+                                <div class="form-group ">
+                                    <label for="nameFr">{{__('vocab.classe_name_fr')}}</label>
+                                    <input type="text" class="form-control " name="nameFr"
+                                        placeholder="{{__('vocab.class_placeholder')}}" value="{{ old('nameFr') }}" />
+
+                                    @error('nameFr')
+                                        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                                    @enderror
+                                </div>
+
+                                <div class="form-group ">
+                                    <label for="nameEn">{{__('vocab.classe_name_en')}}</label>
+                                    <input type="text" class="form-control " name="nameEn"
+                                        placeholder="{{__('vocab.class_placeholder')}}" value="{{ old('nameEn') }}" />
+
+                                    @error('nameEn')
+                                        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                                    @enderror
+                                </div>
+
+                                <div class="form-group ">
                                     <label for="tags">
-                                        Tags (Comma Separated)
+                                        {{__('vocab.tags')}} ({{__('vocab.optional')}})
                                     </label>
-                                    <input type="text" class="form-control text-right" name="tags"
-                                        placeholder="مثال :svt, 1bac, " value="{{ old('tags') }}" />
+                                    <input type="text" class="form-control " name="tags"
+                                         value="{{ old('tags') }}" />
 
                                     @error('tags')
                                         <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
                                     @enderror
                                 </div>
 
-                                <div class="form-group text-right">
+                                <div class="form-group ">
                                     <label for="description">
-                                        معلومات تفصيلية حول القسم
+                                        {{__('vocab.details')}} {{__('vocab.class')}}
                                     </label>
-                                    <textarea class="form-control text-right" name="description" rows="4" placeholder="تفاصيل ....">{{ old('description') }}</textarea>
+                                    <textarea class="form-control " name="description" rows="4" placeholder="{{__('vocab.details')}} ....">{{ old('description') }}</textarea>
 
                                     @error('description')
                                         <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
                                     @enderror
                                 </div>
 
-                                <div class="card-footer text-right">
-                                    <a href="javascript:history.back()" class=class="btn btn-outline-gray">
-                                        رجوع </a>
+                                <div class="card-footer ">
+                                    <a href="javascript:history.back()" class="btn btn-outline-gray">
+                                        {{__('vocab.go_back') }}</a>
 
                                     <button type="submit" class="btn btn-outline-primary">
-                                        حفظ
+                                        {{__('vocab.save')}}
                                     </button>
                                 </div>
                             </form>

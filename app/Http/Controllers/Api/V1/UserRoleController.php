@@ -5,6 +5,9 @@ namespace App\Http\Controllers\Api\V1;
 use App\Http\Controllers\Controller;
 use App\Models\UserRole;
 use Illuminate\Http\Request;
+use App\Models\User;
+use Illuminate\Support\Facades\Auth;
+use Exception;
 
 class UserRoleController extends Controller
 {
@@ -13,9 +16,20 @@ class UserRoleController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index(Request $request, User $user)
     {
-        //
+        try {
+            if (!Auth::check() && !Auth::user()->hasRole('admin')) {
+                return response()->json(['message' => __('vocab.not_authorized')], 404);
+            }
+
+            $userRoles = UserRole::where('userId', $user->id)
+                ->get();
+
+            return $userRoles;
+        } catch (Exception $e) {
+            return response()->json(['message' => __('vocab.empty') . $e->getMessage()], 404);
+        }
     }
 
     /**
@@ -34,9 +48,43 @@ class UserRoleController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(Request $request)
+    public function store(Request $request, User $user)
     {
-        //
+        if (!Auth::check() || !Auth::user()->hasRole('admin')) {
+            return response()->json(['message' => __('vocab.not_authorized')], 403);
+        }
+
+        // Validate the request data
+        $validatedData = $request->validate([
+            'roleId' => 'required|string',
+        ]);
+
+        try {
+            // 💡 Check if the user already has this role
+            $existingRole = UserRole::where('userId', $user->id)
+                ->where('roleId', $validatedData['roleId'])
+                ->first();
+
+            if ($existingRole) {
+                return response()->json([
+                    'message' => __('vocab.role_exist')
+                ], 409); // Use 409 Conflict for duplicate resource
+            }
+
+            // Create a new UserRole object and assign the validated data
+            $validatedData['userId'] = $user->id;
+            $userRole = UserRole::create($validatedData);
+
+            // Return a response
+            return response()->json([
+                'message' => __('vocab.action_success'),
+                'userRole' => $userRole
+            ], 201);
+        } catch (Exception $exception) {
+            return response()->json([
+                'message' => __('vocab.task_failed') . ' ' . __('vocab.try_again') . $exception->getMessage()
+            ], 404);
+        }
     }
 
     /**
@@ -81,6 +129,31 @@ class UserRoleController extends Controller
      */
     public function destroy(UserRole $userRole)
     {
-        //
+        try {
+            if (!Auth::check() || !Auth::user()->hasRole('admin')) {
+                return response()->json(['message' => __('vocab.not_authorized')], 404);
+            }
+            // Soft delete the userRole
+            $userRole->delete();
+            // Return a response
+            return response()->json(['message' => __('vocab.delete_success')], 200);
+        } catch (Exception $e) {
+            return response()->json(['message' => __('vocab.delete_failure') . $e->getMessage()], 404);
+        }
+    }
+
+    public function destroyAll(User $user)
+    {
+        // Check for authorization first
+        if (!Auth::check() || !Auth::user()->hasRole('admin')) {
+            return response()->json(['message' => __('vocab.not_authorized')], 403);
+        }
+
+        // Delete all roles for the specified user
+        // The `delete()` method will perform a permanent deletion
+        UserRole::where('userId', $user->id)->delete();
+
+        // Return a success response
+        return response()->json(['message' => __('vocab.delete_success')], 200);
     }
 }

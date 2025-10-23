@@ -15,34 +15,37 @@ class PlanSeeder extends Seeder
      */
     public function run()
     {
+        // Delete existing plans before seeding new ones
+        // Plan::truncate();
+        
         $plans = [
             [
-                'name' => 'Basic (Free) Plan',
-                'description' => 'Maximum Classes: 1, Maximum students per Store: 100 (Invisible), Fee for Finalized Orders: None (No charge for finalized absences), Basic Analytics and Reporting, Standard Customer Support, Limited Customization Options, No Premium Features',
-                'fee' => 0,
-                'max_classes' => 1,
-                'max_students' => 100,
+            'name' => 'Basic (Free) Plan',
+            'description' => 'Perfect for small schools: Manage up to 3 classes with 30 students each. Includes basic attendance tracking and reporting.',
+            'fee' => 0,
+            'max_classes' => 3,
+            'max_students' => 30,
             ],
             [
-                'name' => 'Standard Plan',
-                'description' => 'Maximum Classes: 5, Maximum students per Store: 500 (Visible), Fee for Finalized Orders: 2% of the absence amount, Advanced Analytics and Reporting, Priority Customer Support, Basic Customization Options, Integrated Payment Gateways, Product Reviews and Ratings',
-                'fee' => 2,
-                'max_classes' => 5,
-                'max_students' => 500,
+            'name' => 'Standard Plan',
+            'description' => 'Ideal for medium-sized schools: Manage up to 15 classes with 40 students each. Includes advanced reporting, priority support, and customizable attendance policies.',
+            'fee' => 2,
+            'max_classes' => 15,
+            'max_students' => 40,
             ],
             [
-                'name' => 'Pro Plan',
-                'description' => 'Maximum Classes: 20, Maximum students per Store: 2,000 (Visible), Fee for Finalized Orders: 1.5% of the absence amount, Comprehensive Analytics and Reporting, Dedicated Customer Support, Advanced Customization Options, Integrated Payment Gateways with Advanced Features (e.g., recurring payments), Marketing and Promotional Tools, Multi-Language Support',
-                'fee' => 1.5,
-                'max_classes' => 20,
-                'max_students' => 2000,
+            'name' => 'Pro Plan',
+            'description' => 'Designed for large schools: Manage up to 50 classes with 45 students each. Includes real-time attendance tracking, automated reports, SMS notifications, and advanced analytics.',
+            'fee' => 1.5,
+            'max_classes' => 50,
+            'max_students' => 45,
             ],
             [
-                'name' => 'Enterprise Plan',
-                'description' => 'Customizable based on specific requirements, Unlimited Manech Stores and Items, Negotiable Fee for Finalized Orders, Tailored Analytics and Reporting, Priority Customer Support with Dedicated Account Manager, Advanced Customization Options and Branding, Advanced Marketing and SEO Tools, Custom Integrations and API Access, Enterprise-grade Security and Compliance',
-                'fee' => 0,
-                'max_classes' => 0,
-                'max_students' => 0,
+            'name' => 'Enterprise Plan',
+            'description' => 'For educational institutions of any size. Unlimited classes and students, custom integrations with school management systems, dedicated support, and advanced security features.',
+            'fee' => 0,
+            'max_classes' => 0,
+            'max_students' => 0,
             ],
         ];
 

@@ -1,11 +1,23 @@
-<x-layout>
-    {{--   @if (!Auth::check())
-    @include('partials._hero')
-  @endif --}}
+@extends('layouts.master')
 
-    {{-- @include('partials._students_search') --}}
-    <x-card class="flex justify-center text-3xl">لائحة التلاميد</x-card>
-    <x-filters-card :params="$params" />
+@section('title')
+{{__('vocab.list')}} {{__('vocab.students')}} 
+@endsection
+
+@section('css')
+@endsection
+
+@section('main-page')
+    <a href="{{ route('classes.index') }}">{{__('vocab.classes')}}</a>
+@endsection
+
+@section('page')
+{{__('vocab.students')}} 
+@endsection
+
+@section('content')
+
+<x-filters-card :params="$params" />
 
     @unless (count($students) == 0)
 
@@ -13,7 +25,7 @@
             <x-classeinf-card :classe="$students[0]->classe" />
         @endif
 
-        <div class="lg:grid lg:grid-cols-3 gap-1 text-ms mb-2">
+        <div class="lg:grid lg:grid-cols-3 gap-1 mx-1">
 
             @foreach ($students as $student)
                 @if ($student->user && $student->classe)
@@ -26,7 +38,9 @@
             </div>
         </div>
     @else
-        <p>غير متوفر</p>
+        <p>{{__('vocab.empty')}}</p>
     @endunless
+@endsection
 
-</x-layout>
+@section('scripts')
+@endsection

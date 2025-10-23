@@ -1,78 +1,64 @@
 @extends('layouts.master')
 
 @section('title')
-    الاقسام
+{{__('vocab.classes')}}
 @endsection
 
 @section('css')
 @endsection
 
 @section('main-page')
-الرئيسية
+
+<a href="{{ route('classes.index') }}"> {{__('vocab.classes')}}</a>
+
 @endsection
 
 @section('page')
-الاقسام
+{{__('vocab.classes')}}
 @endsection
 
 @section('content')
-     <x-filters-card :params="$params" />
-    <div class="lg:grid grid-cols-3 gap-2 m-2">
 
-        @unless (count($classes) == 0)
-
-            @foreach ($classes as $classe)
-                <x-classe-card :classe="$classe" />
-            @endforeach
-        @else
-            <p>لا شيء</p>
-        @endunless
+@auth
+@if (auth()->user()->hasRole('admin'))
+<div class="">
+    <div class="btn-group gap-2 ">
+        <form action="{{ route('classes.destroyAll',$_REQUEST) }}" method="POST">
+            @csrf
+            @method('DELETE')
+            <button type="submit" class="btn btn-app bg-danger"
+                onclick="return confirm('{{__('vocab.delete_permanently').'?'}}')">
+                <i class="fas fa-trash"></i>
+                {{__('vocab.delete_all')}}
+            </button>
+        </form>
+        <a href="{{ route('export.classes',$_REQUEST) }}" class="btn btn-app bg-orange">
+            <i class="fas fa-arrow-up"></i>
+            {{__('vocab.export')}}
+        </a>
     </div>
+</div>
+@endif
+@endauth
+<x-filters-card :params="$params" />
+<div class=" h4">{{__('vocab.number')}}: {{ $totalCount }}</div>
 
-    <div class="mt-6 p-4">
-        {{ $classes->appends(request()->query->all())->links() }}
-    </div>
+<div class="lg:grid grid-cols-3 gap-1 mx-1">
+
+    @unless ($totalCount == 0)
+
+    @foreach ($classes as $classe)
+    <x-classe-card :classe="$classe" />
+    @endforeach
+    @else
+    <p>{{__('vocab.empty')}}</p>
+    @endunless
+</div>
+
+<div class="mt-6 p-4">
+    {{ $classes->appends(request()->query->all())->links() }}
+</div>
 @endsection
 
 @section('scripts')
-    <!-- jQuery -->
-   {{--  <script src="{{ URL::asset('assets/plugins/jquery/jquery.min.js') }}"></script>
-
-    <!-- DataTables  & Plugins -->
-    <script src="{{ URL::asset('assets/plugins/datatables/jquery.dataTables.min.js') }}"></script>
-    <script src="{{ URL::asset('assets/plugins/datatables-bs4/js/dataTables.bootstrap4.min.js') }}"></script>
-    <script src="{{ URL::asset('assets/plugins/datatables-responsive/js/dataTables.responsive.min.js') }}"></script>
-    <script src="{{ URL::asset('assets/plugins/datatables-responsive/js/responsive.bootstrap4.min.js') }}"></script>
-    <script src="{{ URL::asset('assets/plugins/datatables-buttons/js/dataTables.buttons.min.js') }}"></script>
-    <script src="{{ URL::asset('assets/plugins/datatables-buttons/js/buttons.bootstrap4.min.js') }}"></script>
-    <script src="{{ URL::asset('assets/plugins/jszip/jszip.min.js') }}"></script>
-    <script src="{{ URL::asset('assets/plugins/pdfmake/pdfmake.min.js') }}"></script>
-    <script src="{{ URL::asset('assets/plugins/pdfmake/vfs_fonts.js') }}"></script>
-    <script src="{{ URL::asset('assets/plugins/datatables-buttons/js/buttons.html5.min.js') }}"></script>
-    <script src="{{ URL::asset('assets/plugins/datatables-buttons/js/buttons.print.min.js') }}"></script>
-    <script src="{{ URL::asset('assets/plugins/datatables-buttons/js/buttons.colVis.min.js') }}"></script> --}}
-    <!-- AdminLTE App -->
-    {{-- <script src="../../dist/js/adminlte.min.js') }}"></script>
-    <!-- AdminLTE for demo purposes -->
-    <script src="../../dist/js/demo.js') }}"></script> --}}
-    <!-- Page specific script -->
-  {{--   <script>
-        $(function() {
-            $("#example1").DataTable({
-                "responsive": true,
-                "lengthChange": false,
-                "autoWidth": false,
-                "buttons": ["copy", "csv", "excel", "pdf", "print", "colvis"]
-            }).buttons().container().appendTo('#example1_wrapper .col-md-6:eq(0)');
-            $('#example2').DataTable({
-                "paging": true,
-                "lengthChange": false,
-                "searching": false,
-                "ordering": true,
-                "info": true,
-                "autoWidth": false,
-                "responsive": true,
-            });
-        });
-    </script> --}}
 @endsection

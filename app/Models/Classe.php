@@ -2,10 +2,10 @@
 
 namespace App\Models;
 
-use Illuminate\Support\Str;
 use App\Models\AbsenceModel;
 use Illuminate\Http\Request;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Session;
 
 /**
  * Class Classe
@@ -17,8 +17,8 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property string|null $userId
  * @property string $imageId
  * @property string $tags
- * @property Carbon $created_at
- * @property Carbon $updated_at
+ * @property DateTime $created_at
+ * @property DateTime $updated_at
  *
  * @package App\Models
  */
@@ -31,6 +31,9 @@ class Classe extends AbsenceModel
 
     protected $fillable = [
         'name',
+        'nameFr',
+        'nameEn',
+        'nameZ',
         'description',
         'tags',
         'userId',
@@ -56,7 +59,7 @@ class Classe extends AbsenceModel
         $query->when($request->filled('tag'), function ($q) use ($request) {
             $q->where('tags', 'like', '%' . $request->tag . '%');
         });
-
+        return $query;
     }
 
     // Relationship To User
@@ -82,4 +85,18 @@ class Classe extends AbsenceModel
     {
         return $this->hasMany(ClasseImage::class, 'classeId');
     }
+
+    public function classeName()
+	{
+		$locale = Session::get('locale', 'en'); // Get the locale from the session, with 'en' as the default
+
+		if ($locale == 'ar') {
+			return $this->name;
+		} elseif ($locale == 'fr') {
+			return $this->nameFr;
+		} elseif ($locale == 'en') {
+			return $this->nameEn;
+		}
+		return $this->nameZ;
+	}
 }

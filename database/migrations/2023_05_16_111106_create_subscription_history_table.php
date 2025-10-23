@@ -15,7 +15,7 @@ class CreateSubscriptionHistoryTable extends Migration
     {
         Schema::create('SubscriptionHistory', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->text('subscriptionId');
+            $table->string('subscriptionId',255);
             $table->string('action'); //(e.g., renewal, upgrade, downgrade, cancellation)
             $table->timestamps();
         });

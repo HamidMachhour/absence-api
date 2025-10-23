@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Web;
 
+use Illuminate\Http\JsonResponse;
 use App\Models\Address;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
@@ -15,18 +16,40 @@ class AddressController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index(Request $request)
+    public function index(Request $request, V1AddressController $controller)
     {
-        $controller = new V1AddressController();
         $response = $controller->index($request);
+        if ($response instanceof JsonResponse) {
+            $status = $response->getStatusCode();
+            $data = $response->getData(); // Get the underlying data object from the JSON response
 
+            // Test on response status for errors
+            if ($status === 403 || $status === 404) {
+                $message = $data->message ?? __('vocab.not_authorized');
+                return redirect()->route('error', ['message' => $message]);
+            }
+        }
+        $params = $this->prepareFilterParams($request, $response);
 
         return view('addresses.index', [
-            'addresses' => $response
+            'addresses' => $response,
+            'params' => $params
         ]);
-
     }
 
+    public function prepareFilterParams(Request $request, $response)
+    {
+
+        $params = [];
+        if (!$response || count($response) == 0)
+            return $params;
+
+        if ($request->filled('phone')) {
+            $params['phone'] = __('vocab.phone') . ' ' . $request->phone;
+        }
+
+        return $params;
+    }
     /**
      * Show the form for creating a new resource.
      *
@@ -58,8 +81,8 @@ class AddressController extends Controller
         if ($status_code === 201) {
             $message = isset($data['message']) ? $data['message'] : 'Address created!';
             return redirect()->route('addresses.index')->with('message', $message);
-        }else{
-            $message = isset($data['message']) ? $data['message'] : 'لم تتم العملية بنجاح، المرجو اعادة المحاولة';
+        } else {
+            $message = isset($data['message']) ? $data['message'] : __('vocab.action_failure') . ' ' . __('vocab.try_again');
             return back()->withErrors(['message' => $message]);;
         }
     }
@@ -83,9 +106,10 @@ class AddressController extends Controller
      * @return \Illuminate\Http\Response
      */
     // Show Edit Form
-    public function edit(Address $address) {
+    public function edit(Address $address)
+    {
         if (Auth::user()->id !== $address->userId) {
-            return redirect()->route('home.route')->with('message', 'غير مسموح');
+            return redirect()->route('home')->with('message', __('vocab.not_authorized'));
         }
         return view('addresses.edit', ['address' => $address]);
     }
@@ -100,7 +124,7 @@ class AddressController extends Controller
     public function update(Request $request, Address $address)
     {
         $controller = new V1AddressController();
-        $response = $controller->update($request,$address);
+        $response = $controller->update($request, $address);
         // Get the HTTP status code from the response
         $status_code = $response->getStatusCode();
         $responseContent = $response->content();
@@ -108,7 +132,7 @@ class AddressController extends Controller
         if ($status_code === 201) {
             $message = isset($data['message']) ? $data['message'] : 'Address updated!';
             return redirect()->route('addresses.index')->with('message', $message);
-        }else{
+        } else {
             $message = isset($data['message']) ? $data['message'] : 'Not updated';
             return back()->withErrors(['message' => $message]);;
         }
@@ -123,7 +147,7 @@ class AddressController extends Controller
     public function destroy(Address $address)
     {
         if (Auth::user()->id !== $address->userId) {
-            return redirect()->route('home.route')->with('message',  'غير مسموح');
+            return redirect()->route('home')->with('message',  __('vocab.not_authorized'));
         }
         $controller = new V1AddressController();
         $response = $controller->destroy($address);
@@ -135,7 +159,7 @@ class AddressController extends Controller
         if ($status_code === 200) {
             $message = isset($data['message']) ? $data['message'] : 'Address deleted successfully';
         } else {
-            $message = isset($data['message']) ? $data['message'] : 'الحدف لم تتم بنجاح';
+            $message = isset($data['message']) ? $data['message'] : __('vocab.delete_failed');
         }
         return redirect()->route('addresses.index')->with('message', $message);
     }
@@ -144,7 +168,7 @@ class AddressController extends Controller
     public function setDefault(Address $address)
     {
         if (Auth::user()->id !== $address->userId) {
-            return redirect()->route('home.route')->with('message',  'غير مسموح');
+            return redirect()->route('home')->with('message',  __('vocab.not_authorized'));
         }
         $controller = new V1AddressController();
         $response = $controller->setDefault($address);
@@ -158,7 +182,7 @@ class AddressController extends Controller
             $message = isset($data['message']) ? $data['message'] : 'Address set as default successfully';
             //get token and save
         } else {
-            $message = isset($data['message']) ? $data['message'] : 'Action failed.';
+            $message = isset($data['message']) ? $data['message'] : __('vocab.action_failure');
         }
         return redirect()->route('addresses.index')->with('message', $message);
     }

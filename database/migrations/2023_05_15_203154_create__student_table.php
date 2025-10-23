@@ -16,8 +16,8 @@ class CreateStudentTable extends Migration
         Schema::create('Student', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->integer('num')->nullable();
-            $table->text('userId');
-            $table->text('classeId');
+            $table->string('userId',255);
+            $table->string('classeId',255);
             $table->timestamp('deleted_at')->nullable();
             $table->timestamps();
         });

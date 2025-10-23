@@ -15,7 +15,7 @@ class AbsenceStudentSeeder extends Seeder
     {
 
         // Clear  table
-        DB::table('AbsenceStudent')->truncate();
+        //DB::table('AbsenceStudent')->truncate();
         $faker = Faker::create();
 
         // Get all absences and students

@@ -17,15 +17,29 @@ class CreateUserTable extends Migration
             $table->uuid('id')->primary();
             $table->string('firstName');
             $table->string('lastName');
+            $table->string('firstNameFr')->nullable();
+            $table->string('lastNameFr')->nullable();
+            $table->string('firstNameEn')->nullable();
+            $table->string('lastNameEn')->nullable();
+            $table->string('firstNameZ')->nullable();
+            $table->string('lastNameZ')->nullable();
             $table->string('code')->nullable();
             $table->string('email')->unique();
+            $table->string('tag_id')->nullable();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
             $table->rememberToken();
-            $table->text('deleted_at')->nullable();
-            $table->text('addressId')->nullable();
-            $table->text('imageId')->nullable();
+            $table->timestamp('deleted_at')->nullable();
+            $table->string('addressId',255)->nullable();
+            $table->string('imageId',255)->nullable();
             $table->timestamps();
+        });
+
+        // Add the unique index after the table is created
+        // This is the key part to allow nulls
+        Schema::table('_User', function (Blueprint $table) {
+            $table->unique('tag_id');
+            $table->unique('code');
         });
     }
 

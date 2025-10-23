@@ -1,86 +1,67 @@
 @props(['student'])
-<x-card>
-    <div class="grid grid-cols-4 gap-1 mb-2">
-        <div class="d-flex flex-wrap">
-            <a href="{{ route('userImages.show', ['user' => $student->userId]) }}">
-                <img class="rounded-xl w-20" src="{{ $student->user->userImage->uri ?? asset('/images/no-image.png') }}"
-                    alt="" />
+
+<div class="card card-primary card-outline collapsed-card m-1">
+    <div class="card-header">
+        <div class="card-title h3">
+            <a href="{{ request()->fullUrlWithQuery(['studentId' => $student->id, 'page' => 1]) }}" class="flex text-blue-600 hover:text-gray-700 justify-center">
+                {{ $fullname = $student->num . '-' . $student->user->fullName()  }}
             </a>
         </div>
-        <div class="d-flex flex-wrap col-span-2">
-            <h3>
-                <a href="{{ request()->fullUrlWithQuery(['userId' => $student->userId, 'page' => 1]) }}"
-                    class="text-green-600 hover:text-orange-700">
-                    {{ $student->num }}
-                    <span> - <span>
-                            {{ $student->user->firstName }}
-                            <span>
-                                {{ $student->user->lastName }}
-                </a>
-            </h3>
-            <div class="flex flex-wrap bg-orange-200 justify-center m-1 p-1 text-xs rounded-xl">
-                {{ $student->user->email }}
-            </div>
-            <div class="flex flex-wrap bg-green-200 justify-center m-1 p-1 text-xs rounded-xl">
-                {{ 'رقم: ' . $student->user->code }}
-            </div>
-            <div class="flex flex-wrap items-center mt-1 text-xs">
-                <a href="{{ request()->fullUrlWithQuery(['maxAbsences' => ($nbAbsences = $student->absences_count ?? 0), 'page' => 1, 'orderBy' => 'absences_count desc']) }}"
-                    class="flex items-center justify-center bg-gray-200 hover:opacity-80 text-green-600 rounded-xl m-1 p-1">
-                    <i class="fa-solid fa-arrow-down"></i>
-                </a>
-                <div class=" flex bg-gray-200 items-center text-orange-600 rounded-xl m-1 p-1 gap-1">
-                    <div class=" text-green-700  text-xs">
-                        حالات غياب
-                    </div>
-                    <div>
-                        {{ $nbAbsences }}
-                    </div>
-                </div>
-                <a href="{{ request()->fullUrlWithQuery(['minAbsences' => $nbAbsences, 'page' => 1, 'orderBy' => 'absences_count']) }}"
-                    class="flex items-center justify-center bg-gray-200 hover:opacity-80 text-green-600 rounded-xl m-1 p-1">
-                    <i class="fa-solid fa-arrow-up"></i>
-                </a>
-            </div>
-            <div class="flex flex-wrap items-center mt-1 text-xs">
-                <a href="{{ request()->fullUrlWithQuery(['maxPlage' => ($sumPlage = $student->absences_sum_plage ?? 0), 'page' => 1, 'orderBy' => 'absences_sum_plage desc']) }}"
-                    class="flex items-center justify-center bg-gray-200 hover:opacity-80 text-green-600 rounded-xl m-1 p-1">
-                    <i class="fa-solid fa-arrow-down"></i>
-                </a>
-                <div class=" flex items-center bg-gray-200 text-orange-600 rounded-xl m-1 p-1 gap-1">
-                    <div class=" text-green-700  text-xs">
-                        ساعات غياب
-                    </div>
-                    <div>
-                        {{ round($sumPlage/60,2) }}
-                    </div>
-                </div>
-                <a href="{{ request()->fullUrlWithQuery(['minPlage' => $sumPlage, 'page' => 1, 'orderBy' => 'absences_sum_plage']) }}"
-                    class="flex items-center justify-center bg-gray-200 hover:opacity-80 text-green-600 rounded-xl m-1 p-1">
-                    <i class="fa-solid fa-arrow-up"></i>
-                </a>
-            </div>
-
-            <div class="flex">
-                <a class="flex items-center gap-2 bg-orange-200 hover:opacity-80 text-gray-600 rounded-xl p-1 m-1 text-xs"
-                    href="{{ request()->fullUrlWithQuery(['classeId' => $student->classeId, 'page' => 1]) }}">
-                    <img class="w-10 rounded-circle"
-                        src="{{ $student->classe->classeImage->uri ?? asset('/images/no-image.png') }}"
-                        alt="" />
-                    {{ $student->classe->name }}
-                </a>
-            </div>
+        <div class="card-tools">
+            <button type="button" class="btn btn-tool" data-card-widget="collapse">
+                <i class="fas fa-plus"></i>
+            </button>
         </div>
-        @auth
-            @if (auth()->user()->id === $student->classe->userId ||
-                    auth()->user()->hasRole('admin'))
-                <x-studentactions-card :student="$student" />
-            {{-- @else
-                <x-studentpublicactions-card :student="$student" /> --}}
-            @endif
-            {{--  @else
-            <x-studentpublicactions-card :student="$student" /> --}}
-        @endauth
-
+        <!-- /.card-tools -->
     </div>
-</x-card>
+    <!-- /.card-header -->
+    <div class="card-body p-1">
+        <div class="d-flex flex-column ">
+            <div class="d-flex flex-column">
+                <a href="{{ route('users.show', ['user' => $student->userId]) }}" class="flex justify-center">
+                    <img src="{{ $student->user->userImage->uri ?? asset('/assets/images/no-image.png') }}" alt="Photo 1"
+                        class="img-fluid" style="max-width: 150px;">
+                </a>
+                <div class="btn-group">
+                    <div class="btn btn-default">
+                        <i class="fas fa-person-running"></i>
+                        <span class="badge bg-danger">{{ $student->nb_absence }}</span>
+                    </div>
+                    <div class="btn btn-default">
+                        <i class="fas fa-clock"></i>
+                        <span class="badge bg-purple">{{ round(($student->absences_sum_plage ?? 0) / 60, 2) }}</span>
+                    </div>
+                </div>
+            </div>
+            <div class="btn-group-vertical">
+                <div class="btn btn-flat">
+                    <i class="far fa-envelope"></i>
+                    {{ $student->user->email }}
+                </div>
+                <div class="btn btn-flat">
+                    <i class="far fa-id-badge"></i>
+                    {{ $student->user->code }}
+                </div>
+            </div>
+            <div class="user-panel d-flex">
+                <div class="image">
+                    <img src="{{ $student->classe->classeImage->uri ?? asset('/assets/images/no-image.png') }}"
+                        class="img-circle elevation-2" alt="{{ $classename = $student->classe->classeName() }}">
+                </div>
+                <div class="info">
+                    <a href="{{ request()->fullUrlWithQuery(['classeId' => $student->classeId, 'page' => 1]) }}"
+                        class="d-block">{{ $classename }}</a>
+                </div>
+            </div>
+
+            @auth
+            @if (auth()->user()->id === $student->classe->userId || auth()->user()->hasRole('admin'))
+            <x-studentactions-card :student="$student" />
+            {{-- @else
+                    <x-studentpublicactions-card :student="$student" /> --}}
+            @endif
+            @endauth
+        </div>
+    </div>
+    <!-- /.card-body -->
+</div>

@@ -6,7 +6,7 @@
 
 namespace App\Models;
 
-use Carbon\Carbon;
+use DateTime;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
@@ -15,8 +15,8 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property string|null $id
  * @property string|null $classeId
  * @property string|null $uri
- * @property Carbon $created_at
- * @property Carbon $updated_at
+ * @property DateTime $created_at
+ * @property DateTime $updated_at
  *
  * @package App\Models
  */

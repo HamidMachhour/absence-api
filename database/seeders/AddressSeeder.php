@@ -13,7 +13,7 @@ class AddressSeeder extends Seeder
     public function run()
     {
          // Clear  table
-         DB::table('Address')->truncate();
+         //DB::table('Address')->truncate();
 
         $faker = Faker::create();
         $userIds = User::pluck('id')->toArray();

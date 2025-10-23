@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-use Carbon\Carbon;
+use DateTime;
 use Illuminate\Http\Request;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -11,16 +11,16 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * Class Seance
  *
  * @property string|null $id
- * @property string $profId
- * @property string $matiereId
+ * @property string $teacherId
+ * @property string $subjectId
  * @property string $classeId
- * @property string $jourId
+ * @property string $dayId
  * @property string|null $salle
- * @property Carbon $de
- * @property Carbon $a
- * @property Carbon $deleted_at
- * @property Carbon $created_at
- * @property Carbon $updated_at
+ * @property DateTime $de
+ * @property DateTime $a
+ * @property DateTime $deleted_at
+ * @property DateTime $created_at
+ * @property DateTime $updated_at
  *
  * @package App\Models
  */
@@ -32,18 +32,44 @@ class Seance extends AbsenceModel
 
 
     protected $fillable = [
-        'profId',
-        'matiereId',
+        'teacherId',
+        'subjectId',
         'classeId',
-        'jourId',
+        'dayId',
         'de',
         'a',
     ];
 
     public function plageInMinutes()
     {
-        return Carbon::parse($this->a)->diffInMinutes(Carbon::parse($this->de));
+        // Create DateTime objects directly from the string values of $this->de and $this->a
+        $start = new DateTime($this->de);
+        $end = new DateTime($this->a);
+
+        // Calculate the difference between the two dates
+        $interval = $start->diff($end);
+
+        // Get the total minutes
+        $totalMinutes = ($interval->h * 60) + $interval->i;
+
+        return $totalMinutes;
     }
+    public function title()
+    {
+        $title=$this->day->dayName() .
+                    ' ( ' .
+                    (new DateTime($this->de))->format('H:i') .
+                    ' - ' .
+                    (new DateTime($this->a))->format('H:i') .
+                    ' ) ';
+        return $title;
+    }
+
+    public function attendances()
+    {
+        return $this->hasMany(Attendance::class, 'seanceId');
+    }
+
     public function absences()
     {
         return $this->hasMany(Absence::class, 'seanceId');
@@ -56,43 +82,77 @@ class Seance extends AbsenceModel
             $q->where('id', $request->id);
         });
 
-        $query->when($request->filled('profId'), function ($q) use ($request) {
-            $q->where('profId', $request->profId);
+        $query->when($request->filled('teacherId'), function ($q) use ($request) {
+            $q->where('teacherId', $request->teacherId);
         });
 
         $query->when($request->filled('classeId'), function ($q) use ($request) {
             $q->where('classeId', $request->classeId);
         });
 
-        $query->when($request->filled('matiereId'), function ($q) use ($request) {
-            $q->where('matiereId', $request->matiereId);
+        $query->when($request->filled('subjectId'), function ($q) use ($request) {
+            $q->where('subjectId', $request->subjectId);
         });
 
 
-        $query->when($request->filled('jourId'), function ($q) use ($request) {
-            $q->where('jourId', $request->jourId);
+        $query->when($request->filled('dayId'), function ($q) use ($request) {
+            $q->where('dayId', $request->dayId);
         });
 
-        $query->when($request->filled('search'), function ($q) use ($request) {
-            $q->where('salle', $request->search);
+        $query->when($request->filled('salle'), function ($q) use ($request) {
+            $q->where('salle', $request->salle);
         });
+
+        $query->when($request->filled('de'), function ($q) use ($request) {
+            $q->where('de', '>=', $request->de);
+        });
+
+        $query->when($request->filled('a'), function ($q) use ($request) {
+            $q->where('a', '<=', $request->a);
+        });
+
+        // New: sorting
+        $query->when($request->filled('sort'), function ($q) use ($request) {
+            if ($request->sort === 'day_asc')
+                $q->orderBy('dayId', 'asc');
+            elseif ($request->sort === 'day_desc')
+                $q->orderBy('dayId', 'desc');
+            elseif ($request->sort === 'from_asc')
+                $q->orderBy('de', 'asc');
+            elseif ($request->sort === 'to_asc')
+                $q->orderBy('a', 'asc');
+            elseif ($request->sort === 'newest')
+                $q->orderBy('created_at', 'desc');
+            elseif ($request->sort === 'oldest')
+                $q->orderBy('created_at', 'asc');
+        });
+
+        return $query;
     }
 
-    public function jour()
+    public function day()
     {
-        return $this->belongsTo(Jour::class, 'jourId');
+        return $this->belongsTo(_Day::class, 'dayId');
     }
+
+
 
     public function plage()
     {
-        $a=Carbon::parse($this->a)->setDate(1, 1, 1);
-        $de=Carbon::parse($this->de)->setDate(1, 1, 1);
-        return $a->diffInMinutes($de) ;
+        $start = new DateTime($this->de);
+        $end = new DateTime($this->a);
+
+        // Calculate the difference between the two dates
+        $interval = $start->diff($end);
+
+        // Get the total minutes
+        $totalMinutes = ($interval->h * 60) + $interval->i;
+        return $totalMinutes;
     }
 
-    public function matiere()
+    public function subject()
     {
-        return $this->belongsTo(Matiere::class, 'matiereId');
+        return $this->belongsTo(Subject::class, 'subjectId');
     }
 
     public function classe()
@@ -100,8 +160,8 @@ class Seance extends AbsenceModel
         return $this->belongsTo(Classe::class, 'classeId');
     }
 
-    public function professeur()
+    public function teacher()
     {
-        return $this->belongsTo(User::class, 'profId');
+        return $this->belongsTo(User::class, 'teacherId');
     }
 }

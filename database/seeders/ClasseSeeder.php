@@ -11,7 +11,7 @@ use App\Models\StoreCategory;
 use App\Models\Subscription;
 use App\Models\UserRole;
 use Faker\Factory as FakerFactory;
-
+ 
 class ClasseSeeder extends Seeder
 {
     /**
@@ -23,26 +23,26 @@ class ClasseSeeder extends Seeder
 
     {
         // Clear  table
-        DB::table('Classe')->truncate();
+        //DB::table('Classe')->truncate();
 
         $faker = FakerFactory::create();
 
-        $userIds = UserRole::whereRelation('role','nameEn','manager')->pluck('user_id')->toArray();
+        $userIds = UserRole::whereRelation('role','nameEn','manager')->pluck('userId')->toArray();
 
         foreach ($userIds as $userId) {
             $subscriptionIds = Subscription::where('userId', $userId)->pluck('id')->toArray();
-            $addressIds = Address::where('userId', $userId)->pluck('id')->toArray();
-            $addressIds[] = null;
-            $addressId = $faker->randomElement($addressIds);
             $tags = [];
             // Generate 6 fake tags
             for ($i = 0; $i < 4; $i++)
                 $tags[] = $faker->word;
-
+            $name=$faker->company;
             for ($i = 0; $i < 4; $i++) {
                 Classe::create([
                     'id' => $faker->uuid,
-                    'name' => $faker->company,
+                    'name' => $name,
+                    'nameFr' => $name,
+                    'nameEn' => $name,
+                    'nameZ' => $name,
                     'description' => $faker->text,
                     'tags' =>  implode(',', $tags),
 /*                     'deleted_at' => $faker->randomElement(

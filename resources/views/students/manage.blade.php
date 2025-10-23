@@ -1,25 +1,48 @@
-<x-layout>
+@extends('layouts.master')
 
-    <x-card class="flex flex-row flex-wrap justify-center gap-2 mb-2">
-        <x-classeinf-card :classe="$classe" />
+@section('title')
+    {{__('vocab.management')}} {{__('vocab.students')}} 
+@endsection
+
+@section('css')
+@endsection
+
+@section('main-page')
+    <a href="{{ route('classes.index') }}">{{__('vocab.classes')}}</a>
+@endsection
+
+@section('page')
+{{__('vocab.students')}} 
+@endsection
+
+@section('content')
+
+    <x-classeinf-card :classe="$classe" />
+    @auth
         <x-classemanage-card :classe="$classe" />
-    </x-card>
-    <x-filters-card :params="$params" />
+    @endauth
 
-    <div class="lg:grid lg:grid-cols-2 gap-2 mt-2">
+    @unless (count($students) == 0)
+        @if (request()->filled('classeId'))
+            <x-classeinf-card :classe="$students[0]->classe" />
+        @endif
 
-        @unless (count($students) == 0)
+        <div class="lg:grid lg:grid-cols-3 gap-1 mx-1">
 
             @foreach ($students as $student)
-                <x-student-card :student="$student" />
+                @if ($student->user && $student->classe)
+                    <x-student-card :student="$student" />
+                @endif
             @endforeach
-        @else
-            <p>غير متوفر</p>
-        @endunless
 
-    </div>
+            <div class="mt-6 p-4">
+                {{ $students->appends(request()->query->all())->links() }}
+            </div>
+        </div>
+    @else
+        <p>{{__('vocab.empty')}}</p>
+    @endunless
+@endsection
 
-    <div class="mt-6 p-4">
-        {{ $students->appends(request()->query->all())->links() }}
-    </div>
-</x-layout>
+@section('scripts')
+@endsection

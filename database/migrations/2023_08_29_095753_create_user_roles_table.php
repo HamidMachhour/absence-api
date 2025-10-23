@@ -15,8 +15,8 @@ return new class extends Migration
     {
         Schema::create('UserRole', function (Blueprint $table) {
             $table->id();
-            $table->text('user_id');
-            $table->unsignedInteger('role_id');
+            $table->string('userId',255);
+            $table->unsignedBigInteger('roleId');
             $table->text('role_status')->nullable();
             $table->text('deleted_at')->nullable();
             $table->timestamps();

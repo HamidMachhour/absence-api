@@ -1,20 +1,19 @@
 @props(['classe'])
-
+ 
 @auth
     <div class="btn-group mx-1">
         <a class="btn btn-app mx-1" href="{{ route('students.index') }}?classeId={{ $classe->id }}">
             <span class="badge bg-purple">{{ count($classe->students) }}</span>
-            <i class="fas fa-users"></i> تلاميد
+            <i class="fas fa-users"></i> {{__('vocab.students')}} 
         </a>
         <a class="btn btn-app mx-1" href="{{ route('seances.index') }}?classeId={{ $classe->id }}">
             <span class="badge bg-danger">{{ count($classe->seances) }}</span>
-            <i class="fas fa-clock"></i>الحصص
+            <i class="fas fa-clock"></i>{{__('vocab.time_quotas')}} 
         </a>
         <a href="{{ route('students.manage', ['classe' => $classe->id]) }}"
-            class="btn btn-app bg-info mx-1">
+            class="btn btn-app mx-1">
             <i class="fas fa-gear"></i>
-            تسيير
+            {{__('vocab.class_management')}}
         </a>
-
     </div>
 @endauth

@@ -16,9 +16,10 @@ return new class extends Migration
         Schema::create('_Role', function (Blueprint $table) {
             $table->id();
             $table->string('name');
-            $table->string('nameFr');
+            $table->string('nameFr')->nullable();
             $table->string('nameEn');
-            $table->text('deleted_at')->nullable();
+             $table->string('nameZ')->nullable();
+            $table->timestamp('deleted_at')->nullable();
             $table->timestamps();
         });
     }

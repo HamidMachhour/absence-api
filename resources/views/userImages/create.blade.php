@@ -1,31 +1,76 @@
-<x-layout>
-    <x-card class="p-10 max-w-lg mx-auto mt-24">
-        <header class="text-center">
-            <h2 class="text-2xl font-bold uppercase mb-1">اضافة صورة</h2>
-        </header>
+@extends('layouts.master')
 
-        <form method="POST" action="{{ route('userImages.store') }}">
-            @csrf
-            <div class="mb-6">
-                <label for="uri" class="inline-block text-lg mb-2">رابط الصورة</label>
-                <input type="text" class="border border-gray-200 rounded p-2 w-full" name="uri"
-                    placeholder="http://..." value="{{ old('uri') }}" />
+@section('title')
+    {{__('vocab.add_image')}}
+@endsection
 
-                @error('uri')
-                    <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                @enderror
+@section('css')
+@endsection
+
+@section('main-page')
+    <a href="{{ route('userImages.show', ['user' => $user->id]) }}">{{__('vocab.profile_images')}}</a>
+@endsection
+
+@section('page-title')
+    {{__('vocab.add_image')}}
+@endsection
+
+@section('page')
+    {{__('vocab.add_image')}}
+@endsection
+
+@section('content')
+    <section class="content">
+        <div class="container-fluid">
+            <div class="row">
+                <!-- left column -->
+                <div class="col-md-12">
+                    <div class="card card-primary">
+                        <div class="card-header">
+
+                            <h3 class="card-title "> {{__('vocab.add_image')}} </h3>
+                            @error('message')
+                                <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                            @enderror
+                        </div>
+                        @csrf
+                        <div class='card-body'>
+
+                            <form method="POST" action="{{ route('userImages.store') }}">
+                                @csrf
+                                <div class="form-group ">
+                                    <input type="text" class="form-control  " name="uri"
+                                        placeholder="http://..." value="{{ old('uri') }}" />
+
+                                    @error('uri')
+                                        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                                    @enderror
+                                </div>
+
+                                <input type="hidden" name="userId" value="{{ $user->id }}">
+
+                                <div class="card-footer ">
+                                    <button type="submit" class="btn  btn-outline-success">
+                                        <i class="fa-solid fa-save"></i>
+                                        {{__('vocab.save')}}
+                                    </button>
+                                    <a href="javascript:history.back()" class=" btn btn-outline-primary">
+                                        <i class="fa-solid fa-circle-arrow-left"></i>
+                                        {{__('vocab.go_back')}}
+                                    </a>
+                                </div>
+
+                            </form>
+                        </div>
+                    </div>
+                </div>
             </div>
+        </div>
 
-            <input type="hidden" name="userId" value="{{ $user->id }}">
+        </div>
 
-            <div class="mb-6">
-                <button class="bg-orange-600 text-white rounded py-2 px-4 hover:bg-green-700">
-                    حفظ
-                </button>
+        <x-flash-message />
+    @endsection
 
-                <a href="javascript:history.back()" class="bg-gray-200 text-orange-600 rounded p-3 hover:bg-green-700">
-                    رجوع </a>
-            </div>
-        </form>
-    </x-card>
-</x-layout>
+    @section('scripts')
+    @endsection

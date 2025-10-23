@@ -1,88 +1,216 @@
-<x-layout>
-    <x-card class="p-10 max-w-lg mx-auto text-right">
-        <header class="text-center">
-            <h2 class="text-2xl font-bold uppercase mb-1">تغيير الحساب الشخصي</h2>
-        </header>
+@extends('layouts.master')
 
-        <form method="POST" action="{{ route('users.update', ['user' => $user->id]) }}" enctype="multipart/form-data">
-            @csrf
-            @method('PUT')
+@section('title')
+{{__('vocab.update').' '.__('vocab.account')}}
+@endsection
 
-            <div class="mb-6 ">
-                <label for="firstName" class="inline-block text-lg  mb-2"> الاسم العائلي </label>
-                <input type="text" class="text-right border border-gray-200 rounded p-2 w-full" name="firstName"
-                    value="{{ $user->firstName }}" id="firstName" />
+@section('css')
+@endsection
 
-                @error('firstName')
-                    <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                @enderror
-            </div>
-            <div class="mb-6 ">
-                <label for="lastName" class="inline-block text-lg mb-2"> الاسم الشخصي </label>
-                <input type="text" class="text-right border border-gray-200 rounded p-2 w-full" name="lastName"
-                    value="{{ $user->lastName }}" id="lastName" />
+@section('preload')
+@endsection
+@section('main-page')
+<a href="{{ route('home') }}">{{__('vocab.home')}}</a>
+@endsection
 
-                @error('lastName')
-                    <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                @enderror
-            </div>
-            <div class="mb-6">
-                <input type="checkbox" id="change_password" name="change_password" class="mr-2" />
-                <label for="change_password">تغيير القن السري</label>
-            </div>
-            <div class="password-fields mb-6" style="display: none;">
-                <div class="mb-6">
-                    <label for="old_password" class="inline-block text-lg mb-2">
-                        القن السري القديم
-                    </label>
-                    <input type="password" class="border border-gray-200 rounded p-2 w-full" name="old_password"
-                        value="{{ old('old_password') }}" />
+@section('page-title')
+{{__('vocab.home')}}
+@endsection
 
-                    @error('old_password')
+@section('page')
+{{__('vocab.update').' '.__('vocab.account')}}
+@endsection
+
+@section('content')
+<section class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <!-- left column -->
+            <div class="col-md-12">
+                <div class="card card-primary">
+                    <div class="card-header">
+
+                        <div class="card-title">{{__('vocab.update').' '.__('vocab.account')}}</div>
+                        @error('message')
                         <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                    @enderror
-                </div>
+                        @enderror
+                    </div>
+                    <div class="card-body">
 
-                <div class="mb-6 ">
-                    <label for="password" class="inline-block text-lg mb-2">
-                        القن السري الجديد
-                    </label>
-                    <input type="password" class="border border-gray-200 rounded p-2 w-full" name="password"
-                        value="{{ old('password') }}" />
+                        <form method="POST" action="{{ route('users.update', ['user' => $user->id]) }}"
+                            enctype="multipart/form-data">
+                            @csrf
+                            @method('PUT')
 
-                    @error('password')
-                        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                    @enderror
-                </div>
+                            <div class="form-group ">
+                                <label for="firstName" class="inline-block   mb-2"> {{__('vocab.last_name')}} </label>
+                                <input type="text" class=" form-control"
+                                    name="firstName" value="{{ $user->firstName }}" id="firstName" />
 
-                <div class="mb-6 ">
-                    <label for="password_confirmation" class="inline-block text-lg mb-2">
-                        تاكيد القن السري
-                    </label>
-                    <input type="password" class="border border-gray-200 rounded p-2 w-full" name="password_confirmation"
-                        value="{{ old('password_confirmation') }}" />
+                                @error('firstName')
+                                <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                                @enderror
+                            </div>
+                            <div class="form-group ">
+                                <label for="lastName"> {{__('vocab.first_name')}} </label>
+                                <input type="text" class=" form-control"
+                                    name="lastName" value="{{ $user->lastName }}" id="lastName" />
 
-                    @error('password_confirmation')
-                        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                    @enderror
+                                @error('lastName')
+                                <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                                @enderror
+                            </div>
+
+                            <div class="form-group ">
+                                <label for="firstNameZ" class="inline-block   mb-2"> {{__('vocab.last_name_z')}} </label>
+                                <input type="text" class=" form-control"
+                                    name="firstNameZ" value="{{ $user->firstNameZ }}" id="firstNameZ" />
+
+                                @error('firstNameZ')
+                                <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                                @enderror
+                            </div>
+                            <div class="form-group ">
+                                <label for="lastNameZ"> {{__('vocab.first_name_z')}} </label>
+                                <input type="text" class=" form-control"
+                                    name="lastNameZ" value="{{ $user->lastNameZ }}" id="lastNameZ" />
+
+                                @error('lastNameZ')
+                                <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                                @enderror
+                            </div>
+
+                            <div class="form-group ">
+                                <label for="firstNameFr" class="inline-block   mb-2"> {{__('vocab.last_name_fr')}} </label>
+                                <input type="text" class=" form-control"
+                                    name="firstNameFr" value="{{ $user->firstNameFr }}" id="firstNameFr" />
+
+                                @error('firstNameFr')
+                                <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                                @enderror
+                            </div>
+                            <div class="form-group ">
+                                <label for="lastNameFr"> {{__('vocab.first_name_fr')}} </label>
+                                <input type="text" class=" form-control"
+                                    name="lastNameFr" value="{{ $user->lastNameFr }}" id="lastNameFr" />
+
+                                @error('lastNameFr')
+                                <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                                @enderror
+                            </div>
+
+                            <div class="form-group ">
+                                <label for="firstNameEn" class="inline-block   mb-2"> {{__('vocab.last_name_en')}} </label>
+                                <input type="text" class=" form-control"
+                                    name="firstNameEn" value="{{ $user->firstNameEn }}" id="firstNameEn" />
+
+                                @error('firstNameEn')
+                                <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                                @enderror
+                            </div>
+                            <div class="form-group ">
+                                <label for="lastNameEn"> {{__('vocab.first_name_en')}} </label>
+                                <input type="text" class=" form-control"
+                                    name="lastNameEn" value="{{ $user->lastNameEn }}" id="lastNameEn" />
+
+                                @error('lastNameEn')
+                                <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                                @enderror
+                            </div>
+
+                            <div class="form-group ">
+                                <label for="code"> {{__('vocab.code')}} </label>
+                                <input type="text" class=" form-control"
+                                    name="code" value="{{ $user->code }}" id="code" />
+
+                                @error('code')
+                                <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                                @enderror
+                            </div>
+
+                            <div class="form-group ">
+                                <label for="tag_id"> {{__('vocab.tag_id')}} </label>
+                                <input type="text" class=" form-control"
+                                    name="tag_id" value="{{ $user->tag_id }}" id="tag_id" />
+
+                                @error('tag_id')
+                                <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                                @enderror
+                            </div>
+
+
+
+                            <div class="form-group ">
+                                <input type="checkbox" id="change_password" name="change_password" class="mr-2" />
+                                <label for="change_password">{{__('vocab.change_password')}}</label>
+                            </div>
+                            <div class="password-fields mb-6" style="display: none;">
+                                <div class="form-group ">
+                                    <label for="old_password">
+                                        {{__('vocab.current_password')}}
+                                    </label>
+                                    <input type="password" class="form-control  "
+                                        name="old_password" value="{{ old('old_password') }}" />
+
+                                    @error('old_password')
+                                    <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                                    @enderror
+                                </div>
+
+                                <div class="form-group ">
+                                    <label for="password">
+                                        {{__('vocab.new_password')}}
+                                    </label>
+                                    <input type="password" class="form-control  "
+                                        name="password" value="{{ old('password') }}" />
+
+                                    @error('password')
+                                    <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                                    @enderror
+                                </div>
+
+                                <div class="form-group ">
+                                    <label for="password_confirmation">
+                                        {{__('vocab.confirm_password')}}
+                                    </label>
+                                    <input type="password" class="form-control  "
+                                        name="password_confirmation" value="{{ old('password_confirmation') }}" />
+
+                                    @error('password_confirmation')
+                                    <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                                    @enderror
+                                </div>
+                            </div>
+
+                            <div class="card-footer ">
+                                <button type="submit" class="btn  btn-outline-success">
+                                    <i class="fa-solid fa-save"></i>
+                                    {{__('vocab.save')}}
+                                </button>
+
+                                <a href="{{ route('users.show', ['user' => $user->id]) }}" class=" btn btn-outline-primary">
+                                    <i class="fa-solid fa-circle-arrow-left"></i>
+                                    {{__('vocab.go_back')}}
+                                </a>
+
+                            </div>
+                        </form>
+                    </div>
+
                 </div>
             </div>
+        </div>
+    </div>
+</section>
+@endsection
 
-            <div class="mb-6 text-left">
-                <button class="bg-orange-600 text-white rounded py-2 px-4 hover:bg-green-700">
-                    حفظ
-                </button>
-                <a href="javascript:history.back()" class="text-orange-600 hover:text-green-700">رجوع</a>
-            </div>
-        </form>
-    </x-card>
+@section('scripts')
+<script>
+    const checkbox = document.getElementById('change_password');
+    const passwordFields = document.querySelector('.password-fields');
 
-    <script>
-        const checkbox = document.getElementById('change_password');
-        const passwordFields = document.querySelector('.password-fields');
-
-        checkbox.addEventListener('change', function() {
-            passwordFields.style.display = this.checked ? 'block' : 'none';
-        });
-    </script>
-</x-layout>
+    checkbox.addEventListener('change', function() {
+        passwordFields.style.display = this.checked ? 'block' : 'none';
+    });
+</script>
+@endsection

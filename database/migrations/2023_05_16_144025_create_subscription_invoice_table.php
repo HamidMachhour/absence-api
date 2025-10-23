@@ -15,8 +15,8 @@ class CreateSubscriptionInvoiceTable extends Migration
     {
         Schema::create('SubscriptionInvoice', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->text('userId');
-            $table->text('subscriptionId');
+            $table->string('userId',255);
+            $table->string('subscriptionId',255);
             $table->float('amount');
             $table->string('status');
             $table->timestamp('due_date');

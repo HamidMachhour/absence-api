@@ -13,10 +13,10 @@ class CreateStudentCandidateTable extends Migration
      */
     public function up()
     {
-        Schema::create('StudentCandidate', function (Blueprint $table) {
+        Schema::create('Enrollment', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->text('userId');
-            $table->text('classeId');
+            $table->string('userId',255);
+            $table->string('classeId',255);
             $table->timestamp('deleted_at')->nullable();
             $table->timestamps();
         });
@@ -29,6 +29,6 @@ class CreateStudentCandidateTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('StudentCandidate');
+        Schema::dropIfExists('Enrollment');
     }
 }

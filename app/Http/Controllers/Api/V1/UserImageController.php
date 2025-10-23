@@ -15,13 +15,13 @@ class UserImageController extends Controller
     public function setDefault(User $user, UserImage $image)
     {
         if (Auth::user()->id !== $user->id) {
-            return response()->json(['message' => 'تم الرفض، لا تمتلك التفويض الكافي للقيام بالعملية'], 403);
+            return response()->json(['message' => __('vocab.not_authorized')], 403);
         }
         try {
             $user->update(['imageId' => $image->id]);
             return response()->json(['message' => 'Update successfully', 'user' => $user], 200);
         } catch (Exception $e) {
-            return response()->json(['message' => 'لم يتم التعديل بنجاح، المرجو اعادة المحاولة' . $e->getMessage()], 404);
+            return response()->json(['message' => __('vocab.update_failure').' '.__('vocab.try_again') . $e->getMessage()], 404);
         }
     }
     /**
@@ -50,11 +50,11 @@ class UserImageController extends Controller
                     $user->update(['imageId' => $userImage->id]);
                 }
                 // Return a response
-                return response()->json(['message' => 'تمت الاضافة بنجاح', 'userImage' => $userImage], 201);
+                return response()->json(['message' => __('vocab.action_success'), 'userImage' => $userImage], 201);
             }
-            return response()->json(['message' => 'لم تتم العملية بنجاح، المرجو اعادة المحاولة'], 404);
+            return response()->json(['message' => __('vocab.action_failure').' '.__('vocab.try_again')], 404);
         } catch (Exception $exception) {
-            return response()->json(['message' => 'العملية لم تتم بنجاح، المرجو اعادة المحاولة' . $exception->getMessage()], 404);
+            return response()->json(['message' => __('vocab.task_failed').' '.__('vocab.try_again') . $exception->getMessage()], 404);
         }
     }
 
@@ -75,9 +75,9 @@ class UserImageController extends Controller
             ->findOrFail($id);
             // Save the userImage
             $userImage->update($validatedData);
-            return response()->json(['message' => 'تم التعديل بنجاح', 'userImage' => $userImage], 201);
+            return response()->json(['message' => __('vocab.update_success'), 'userImage' => $userImage], 201);
         } catch (Exception $exception) {
-            return response()->json(['message' => 'لم يتم التعديل بنجاح، المرجو اعادة المحاولة' . $exception->getMessage()], 404);
+            return response()->json(['message' => __('vocab.update_failure').' '.__('vocab.try_again') . $exception->getMessage()], 404);
         }
     }
 
@@ -94,7 +94,7 @@ class UserImageController extends Controller
             // Return a response
             return response()->json(['message' => 'Deleted successfully'], 201);
         } catch (Exception $e) {
-            return response()->json(['message' => 'غير متوفر. ' . $e->getMessage()], 404);
+            return response()->json(['message' => __('vocab.delete_failure') . $e->getMessage()], 404);
         }
     }
 }

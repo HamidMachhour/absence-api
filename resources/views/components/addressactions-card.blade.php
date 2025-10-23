@@ -1,42 +1,37 @@
 @props(['address'])
 
-<x-card class="d-flex flex-column justify-stretch text-xs">
-    @auth
+@auth
+    <div class="btn-group m-1">
+
         @if ($address->userId === auth()->user()->id)
             <a href="{{ route('addresses.edit', ['address' => $address->id]) }}"
-                class="flex justify-center bg-blue-500 text-white mb-2 p-2 rounded-xl hover:opacity-80">
-                <div classs="block">
-                    <i class="fa-solid fa-edit"></i>
-                    تعديل
-                </div>
+                class="btn btn-app mx-1 bg-primary">
+                <i class="fa-solid fa-edit"></i>
+                {{__('vocab.edit')}}
             </a>
             @if ($address->id !== auth()->user()->addressId)
                 <form action="{{ route('addresses.default', ['address' => $address->id]) }}" method="POST" class="inline">
                     @csrf
-                    <button type="submit" class="w-full bg-gray-700 text-white mb-2 p-2 rounded-xl hover:opacity-80"
-                        onclick="return confirm('Are you sure you want to set current address as default?')">
+                    <button type="submit" class="btn btn-app mx-1 bg-info"
+                        onclick="return confirm('{{__('vocab.are_you_sure').'?'}}')">
                         <i class="fa-solid fa-check"></i>
-                        اختر عنوان رئيسي </button>
+                       {{__('vocab.set_as_primary_address')}} </button>
                 </form>
             @else
-                <div class="flex">
-                    <div class="block text-gray-700 border-2 border-gray-700 rounded-xl p-1 m-2 text-xs">
-                        <i class="fa-solid fa-check"></i>
-                         عنوان رئيسي
-                    </div>
+                <div class="btn btn-app mx-1">
+                    <i class="fa-solid fa-check"></i>
+                    {{__('vocab.primary_address')}}
                 </div>
             @endif
             <form action="{{ route('addresses.destroy', ['address' => $address->id]) }}" method="POST" class="inline">
                 @csrf
                 @method('DELETE')
-                <button type="submit" class="w-full bg-red-500 text-white  mb-2 p-2 rounded-xl hover:opacity-80"
-                    onclick="return confirm('Are you sure you want to delete this address?')">
+                <button type="submit" class="btn btn-app mx-1 bg-danger"
+                    onclick="return confirm('{{__('vocab.delete_permanently').'?'}}')">
                     <i class="fa-solid fa-trash"></i>
-                    حدف
+                    {{__('vocab.delete')}}
                 </button>
             </form>
         @endif
-
-    @endauth
-
-</x-card>
+    </div>
+@endauth

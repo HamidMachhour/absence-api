@@ -14,7 +14,7 @@ class UserImageSeeder extends Seeder
     public function run()
     {
         // Clear  table
-        DB::table('UserImage')->truncate();
+        //DB::table('UserImage')->truncate();
 
         $faker = FakerFactory::create();
 

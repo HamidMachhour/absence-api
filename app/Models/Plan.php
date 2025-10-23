@@ -6,7 +6,7 @@
 
 namespace App\Models;
 
-use Carbon\Carbon;
+use DateTime;
 use Illuminate\Database\Eloquent\SoftDeletes;
 /**
  * Class Plan
@@ -17,8 +17,8 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property float|null $fee
  * @property int|null $max_classes
  * @property int|null $max_students
- * @property Carbon $created_at
- * @property Carbon $updated_at
+ * @property DateTime $created_at
+ * @property DateTime $updated_at
  *
  * @package App\Models
  */

@@ -16,13 +16,12 @@ class RoleSeeder extends Seeder
      */
     public function run()
     {
-        // Clear the users table
-        DB::table('_Role')->truncate();
+        // DB::table('_Role')->truncate();
         $roles = [
-            ['name' => 'مدير','nameFr' => 'admin','nameEn' => 'admin'],
-            ['name' => 'مسير','nameFr' => 'gestionnaire','nameEn' => 'manager'],
-            ['name' => 'استاد','nameFr' => 'professeur','nameEn' => 'teacher'],
-            ['name' => 'تلميد','nameFr' => 'etudiant','nameEn' => 'student'],
+            ['name' => 'مدير', 'nameFr' => 'admin', 'nameEn' => 'admin', 'nameZ' => 'ⴰⵎⵙⵉⵔ'],
+            ['name' => 'مسير', 'nameFr' => 'gestionnaire', 'nameEn' => 'manager', 'nameZ' => 'ⴰⵎⵙⵡⵓⵇⴻⴹ'],
+            ['name' => 'استاد', 'nameFr' => 'professeur', 'nameEn' => 'teacher', 'nameZ' => 'ⴰⵙⴻⵍⵎⴰⴷ'],
+            ['name' => 'تلميذ', 'nameFr' => 'etudiant', 'nameEn' => 'student', 'nameZ' => 'ⴰⵏⴻⵍⵎⴰⴷ'],
         ];
         // Create 4 users
         foreach ($roles as $rolename) {

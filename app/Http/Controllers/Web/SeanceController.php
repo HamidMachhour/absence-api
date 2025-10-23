@@ -3,15 +3,14 @@
 namespace App\Http\Controllers\Web;
 
 use DateTime;
-use ArrayObject;
+use Illuminate\Http\JsonResponse;
 use DateInterval;
-use App\Models\Jour;
+use App\Models\_Day;
 use App\Models\User;
 use App\Models\Classe;
 use App\Models\Seance;
-use League\Csv\Reader;
-use App\Models\Matiere;
-use Illuminate\Support\Str;
+
+use App\Models\Subject;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
@@ -20,11 +19,35 @@ use App\Http\Controllers\Api\V1\SeanceController as V1SeanceController;
 class SeanceController extends Controller
 {
 
-    // Show all seances
-    public function index(Request $request)
+    // Declare a static property to hold the array
+    protected static array $sharedHours = [];
+
+    // The constructor is called once when the controller is instantiated
+    public function __construct()
     {
-        $v1Controller = new V1SeanceController();
+        // Check if the static array has already been populated
+        // This ensures the function is called only once, even if
+        // multiple instances of the controller are created during the request lifecycle.
+        if (empty(self::$sharedHours)) {
+            self::$sharedHours = $this->hours();
+        }
+    }
+
+    // Show all seances
+    public function index(Request $request, V1SeanceController $v1Controller)
+    {
         $response = $v1Controller->index($request);
+
+        if ($response instanceof JsonResponse) {
+            $status = $response->getStatusCode();
+            $data = $response->getData(); // Get the underlying data object from the JSON response
+
+            // Test on response status for errors
+            if ($status === 403 || $status === 404) {
+                $message = $data->message ?? __('vocab.not_authorized');
+                return redirect()->route('error', ['message' => $message]);
+            }
+        }
 
         $params = $this->prepareFilterParams($request, $response);
         return view('seances.index', [
@@ -34,16 +57,36 @@ class SeanceController extends Controller
     }
 
     // Show all authenticated user's seances
-    public function manage(Request $request)
+    public function manage(Request $request, V1SeanceController $v1Controller)
     {
 
-        $v1Controller = new V1SeanceController();
         $response = $v1Controller->show($request);
+
+        $teachers = User::teachers();
+        $classes = Classe::all();
+        $subjects = Subject::all();
+        $jours = _Day::all();
+        
+        if ($response instanceof JsonResponse) {
+            $status = $response->getStatusCode();
+            $data = $response->getData(); // Get the underlying data object from the JSON response
+
+            // Test on response status for errors
+            if ($status === 403 || $status === 404) {
+                $message = $data->message ?? __('vocab.not_authorized');
+                return redirect()->route('error', ['message' => $message]);
+            }
+        }
 
         $params = $this->prepareFilterParams($request, $response);
         return view('seances.manage', [
             'seances' => $response,
-            'params' => $params
+            'params' => $params,
+            'teachers' => $teachers,
+            'classes' => $classes,
+            'subjects' => $subjects,
+            'days' => $jours,
+            'plages' => self::$sharedHours,
         ]);
     }
     public function prepareFilterParams(Request $request, $response)
@@ -54,19 +97,22 @@ class SeanceController extends Controller
             return $params;
 
         if ($request->filled('classeId')) {
-            $params['classeId'] = 'القسم:' . $response->first()->classe->name;
+            $params['classeId'] = __('vocab.class') . ':' . $response->first()->classe->classeName();
         }
-        if ($request->filled('profId')) {
-            $params['profId'] = 'الاستاد:' . $response->first()->professeur->firstName;
+        if ($request->filled('teacherId')) {
+            $params['teacherId'] = __('vocab.teacher') . ':' . $response->first()->teacher->fullName();
         }
-        if ($request->filled('matiereId')) {
-            $params['matiereId'] = 'المادة:' . $response->first()->matiere->name;
+        if ($request->filled('subjectId')) {
+            $params['subjectId'] = __('vocab.subject') . ':' . $response->first()->subject->subjectName();
         }
-        if ($request->filled('jourId')) {
-            $params['jourId'] = 'اليوم:' . $response->first()->jour->name;
+        if ($request->filled('dayId')) {
+            $params['dayId'] = __('vocab.day') . ':' . $response->first()->day->dayName();
         }
         if ($request->filled('search')) {
-            $params['search'] = 'بحث ' . $request->search;
+            $params['search'] = __('vocab.search') . $request->search;
+        }
+        if ($request->filled('salle')) {
+            $params['salle'] = __('vocab.room') . ':' . $request->salle;
         }
 
         return $params;
@@ -74,7 +120,6 @@ class SeanceController extends Controller
     //Show single seance
     public function show(Seance $seance)
     {
-        //dd($seance);
         return view('seances.show', [
             'seance' => $seance
         ]);
@@ -86,46 +131,48 @@ class SeanceController extends Controller
 
         $teachers = User::withRole("teacher")->get();
         $classes = Classe::all();
-        $matieres = Matiere::all();
-        $jours = Jour::all();
+        $subjects = Subject::all();
+        $jours = _Day::all();
         return view(
             'seances.create',
             [
                 'teachers' => $teachers,
                 'classes' => $classes,
-                'matieres' => $matieres,
+                'subjects' => $subjects,
                 'jours' => $jours,
-                'hours' => $this->hours(),
+                'hours' => self::$sharedHours,
             ]
         );
     }
 
-    public static function hours()
+    public static function hours(): array
     {
-        $startTime = new DateTime('08:30');
-        $endTime = new DateTime('18:30');
-        $interval = new DateInterval('PT1H'); // Interval of 1 hour
+        $startTime = new DateTime('00:00');
+        $endTime = new DateTime('23:59');
+        $interval = new DateInterval('PT5M'); // Interval of 5 min
 
-        $hours = new ArrayObject();
+        $hours = [];
         for ($current = $startTime; $current <= $endTime; $current->add($interval)) {
-            $hours->append($current->format('H:i'));
+            $hours[] = $current->format('H:i');
         }
+        $hours[] = $endTime->format('H:i');
         return $hours;
     }
+
     // Store store Data
-    public function store(Request $request)
+    public function store(Request $request, V1SeanceController $controller)
     {
-        $controller = new V1SeanceController();
+
         $response = $controller->store($request);
         // Get the HTTP status code from the response
         $status_code = $response->getStatusCode();
         $responseContent = $response->content();
         $data = json_decode($responseContent, true); // true to convert to an associative array
         if ($status_code === 201) {
-            $message = isset($data['message']) ? $data['message'] : 'تمت الاضافة بنجاح';
+            $message = isset($data['message']) ? $data['message'] : __('vocab.action_success');
             return redirect()->route('seances.manage')->with('message', $message);
         } else {
-            $message = isset($data['message']) ? $data['message'] : 'لم تتم العملية بنجاح، المرجو اعادة المحاولة';
+            $message = isset($data['message']) ? $data['message'] : __('vocab.action_failure') . ' ' . __('vocab.try_again');
             return back()->withErrors(['message' => $message]);;
         }
     }
@@ -133,13 +180,13 @@ class SeanceController extends Controller
     // Show Edit Form
     public function edit(Seance $seance)
     {
-        if (Auth::user()->id !== $seance->userId && !Auth::user()->hasRole('admin')) {
-            return redirect()->route('home.route')->with('message',  'غير مسموح');
+        if (!Auth::user()->hasRole('admin')) {
+            return redirect()->route('home')->with('message',  __('vocab.not_authorized'));
         }
         $teachers = User::withRole("teacher")->get();
         $classes = Classe::all();
-        $matieres = Matiere::all();
-        $jours = Jour::all();
+        $subjects = Subject::all();
+        $jours = _Day::all();
 
         return view(
             'seances.edit',
@@ -147,9 +194,9 @@ class SeanceController extends Controller
                 'seance' => $seance,
                 'teachers' => $teachers,
                 'classes' => $classes,
-                'matieres' => $matieres,
+                'subjects' => $subjects,
                 'jours' => $jours,
-                'hours' => $this->hours(),
+                'hours' => self::$sharedHours,
             ]
         );
     }
@@ -157,8 +204,8 @@ class SeanceController extends Controller
     // Update store Data
     public function update(Request $request, Seance $seance)
     {
-        if (Auth::user()->id !== $seance->userId && !Auth::user()->hasRole('admin')) {
-            return redirect()->route('error.route', ['message' =>  'غير مسموح']);
+        if (!Auth::user()->hasRole('admin')) {
+            return redirect()->route('error', ['message' =>  __('vocab.not_authorized')]);
         }
 
         $controller = new V1SeanceController();
@@ -170,19 +217,19 @@ class SeanceController extends Controller
 
         if ($status_code === 200) {
             // update successful
-            $message = isset($data['message']) ? $data['message'] : 'تمت التعديل بنجاح';
+            $message = isset($data['message']) ? $data['message'] : __('vocab.update_success');
             //get token and save
         } else {
-            $message = isset($data['message']) ? $data['message'] : 'لم يتم التعديل بنجاح';
+            $message = isset($data['message']) ? $data['message'] : __('vocab.update_failure') . ' ' . __('vocab.try_again');
         }
         return redirect()->route('seances.edit', ['seance' => $seance])->with('message', $message);
     }
 
-    // Delete store
+    // Delete seance
     public function destroy(Seance $seance)
     {
-        if (Auth::user()->id !== $seance->userId && !Auth::user()->hasRole('admin')) {
-            return redirect()->route('home.route')->with('message',  'غير مسموح');
+        if (!Auth::user()->hasRole('admin')) {
+            return redirect()->route('home')->with('message',  __('vocab.not_authorized'));
         }
         $controller = new V1SeanceController();
         $response = $controller->destroy($seance);
@@ -192,21 +239,41 @@ class SeanceController extends Controller
 
 
         if ($status_code === 200) {
-            $message = isset($data['message']) ? $data['message'] : 'تم الحدف بنجاح';
+            $message = isset($data['message']) ? $data['message'] : __('vocab.delete_success');
         } else {
-            $message = isset($data['message']) ? $data['message'] : 'الحدف لم تتم بنجاح';
+            $message = isset($data['message']) ? $data['message'] : __('vocab.delete_failed');
         }
         return redirect()->route('seances.manage')->with('message', $message);
     }
 
-
-    public function export(Seance $seance)
+    //Destroy all seances
+    public function destroyAll(Request $request)
     {
-        if (Auth::user()->id !== $seance->userId && !Auth::user()->hasRole('admin')) {
-            return redirect()->route('home.route')->with('message',  'غير مسموح');
+        if (!Auth::user()->hasRole('admin')) {
+            return redirect()->route('home')->with('message',  __('vocab.not_authorized'));
         }
         $controller = new V1SeanceController();
-        $response = $controller->export($seance);
+        $response = $controller->destroyAll($request);
+        $status_code = $response->getStatusCode();
+        $responseContent = $response->content();
+        $data = json_decode($responseContent, true); // true to convert to an associative array
+
+
+        if ($status_code === 200) {
+            $message = isset($data['message']) ? $data['message'] : __('vocab.delete_success');
+        } else {
+            $message = isset($data['message']) ? $data['message'] : __('vocab.delete_failed');
+        }
+        return redirect()->route('seances.manage')->with('message', $message);
+    }
+
+    public function export(Request $request, V1SeanceController $controller)
+    {
+        if (!Auth::user()->hasRole('admin') && !Auth::user()->hasRole('manager')) {
+            return redirect()->route('home')->with('message',  __('vocab.not_authorized'));
+        }
+
+        $response = $controller->export($request);
         $status_code = $response->getStatusCode();
         $responseContent = $response->content();
         $data = json_decode($responseContent, true); // true to convert to an associative array
@@ -215,40 +282,46 @@ class SeanceController extends Controller
             return $response;
         }
 
-        $message = isset($data['message']) ? $data['message'] : 'Action failed.';
+        $message = isset($data['message']) ? $data['message'] : __('vocab.action_failure');
 
         return redirect()->route('seances.manage')->with('message', $message);
     }
 
-    public function importForm(Seance $seance)
+    public function importForm()
     {
 
-        if (Auth::user()->id !== $seance->userId && !Auth::user()->hasRole('admin')) {
-            return redirect()->route('home.route')->with('message', 'Import unauthorized for this store!');
+        if (!Auth::user()->hasRole('admin')) {
+            return redirect()->route('home')->with('message', __('vocab.not_authorized'));
         }
-        return view('seances.import', ['seance' => $seance]);
+        return view('seances.import');
     }
 
-    public function import(Request $request, Seance $seance)
+    public function import(Request $request, V1SeanceController $controller)
     {
-        if (Auth::user()->id !== $seance->userId && !Auth::user()->hasRole('admin')) {
-            return redirect()->route('home.route')->with('message',  'غير مسموح');
+        // Authorization check
+        if (!Auth::user()->hasRole('admin')) {
+            return redirect()->route('home')->with('message',  __('vocab.not_authorized'));
         }
 
-        $controller = new V1SeanceController();
-        $response = $controller->import($request, $seance);
+        $response = $controller->import($request);
         $status_code = $response->getStatusCode();
-        $responseContent = $response->content();
-        $data = json_decode($responseContent, true); // true to convert to an associative array
 
+        // Check if the response from V1SeanceController is a successful download response
+        if ($status_code === 200 && $response->headers->has('Content-Disposition')) {
+            return $response; // Directly return the file response to the browser
+        }
+
+        // If it's not a download response (e.g., an error response),
+        // then process it to get the message and redirect.
+        $responseContent = $response->content();
+        $data = json_decode($responseContent, true);
 
         if ($status_code === 200) {
-            //  return $response;
-            $message = isset($headers['added']) ? $headers['added'] . ' students added successfully!' : 'Import students successully.';
-            return redirect()->route('students.manage', ['seance' => $seance->id])->with('message', $message);
+            $message = isset($data['message']) ? $data['message'] : __('vocab.seances_imported');
+            return redirect()->route('seances.manage')->with('message', $message);
         } else {
-            $message = isset($data['message']) ? $data['message'] : 'Action failed.';
-            return redirect()->route('students.manage', ['seance' => $seance->id])->with('message', $message);
+            $message = isset($data['message']) ? $data['message'] : __('vocab.action_failure');
+            return redirect()->route('seances.manage')->with('message', $message);
         }
     }
 }

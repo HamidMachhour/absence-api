@@ -20,14 +20,31 @@ use Illuminate\Support\Facades\Response;
 
 class StudentController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     *
-     * @param int $page_size
-     * @return \Illuminate\Http\Response
-     */
+
+    public function getStudents(Request $request, Classe $classe)
+    {
+
+        $students = Student::select(
+            DB::raw('Student.id as student_id'),
+            DB::raw('_User.firstName'),
+            DB::raw('_User.lastName')
+
+        )
+            ->join('_User', '_User.id', '=', 'Student.userId')
+            ->where('classeId', $classe->id)
+            ->whereNull('Student.deleted_at')
+            ->whereNull('_User.deleted_at')
+            ->get();
+
+        return response()->json(['students' => $students]);
+    }
+
     public function index(Request $request, $page_size = 40)
     {
+        if (!Auth::check()) {
+            return response()->json(['message' => __('vocab.not_authorized')], 403);
+        }
+
         try {
             if ($request->filled("page_size"))
                 $page_size = $request->input("page_size");
@@ -39,25 +56,26 @@ class StudentController extends Controller
             */
             $query = Student::query()
                 ->select(
-                    DB::raw('"Student".*'),
-                    DB::raw('sum("AbsenceStudent".plage) as absences_sum_plage'),
+                    DB::raw('Student.*'),
+                    DB::raw('sum(AbsenceStudent.plage) as absences_sum_plage'),
                     DB::raw('count(AbsenceStudent.studentId) as absences_count ')
                 )
                 ->leftJoin('AbsenceStudent', 'Student.id', '=', 'AbsenceStudent.studentId')
                 ->groupBy('Student.id', 'Student.userId', 'Student.classeId', 'Student.num')
                 ->filter($request);
 
-            //dd($query->toSql(), $query->getBindings());
 
             return $query->paginate($page_size);
         } catch (Exception $e) {
-            dd($e->getMessage());
-            return response()->json(['message' => 'غير متوفر. ' . $e->getMessage()], 404);
+            return response()->json(['message' => __('vocab.empty') . $e->getMessage()], 404);
         }
     }
 
     public function show(Request $request, $classe, $page_size = 40)
     {
+        if (!Auth::check()) {
+            return response()->json(['message' => __('vocab.not_authorized')], 403);
+        }
         try {
             if ($request->filled("page_size"))
                 $page_size = $request->input("page_size");
@@ -65,11 +83,11 @@ class StudentController extends Controller
             return Student::where('classeId', $classe->id)
                 ->withSum('absences', 'plage')
                 ->withCount('absences')
-                ->groupByRaw('"Student".id,"Student".userId,"Student".classeId,"Student".num')
+                ->groupByRaw('Student.id,Student.userId,Student.classeId, Student.num')
                 ->filter($request)
                 ->paginate($page_size);
         } catch (Exception $e) {
-            return response()->json(['message' => 'غير متوفر. ' . $e->getMessage()], 404);
+            return response()->json(['message' => __('vocab.empty') . $e->getMessage()], 404);
         }
     }
     /**
@@ -81,7 +99,7 @@ class StudentController extends Controller
     public function store(Request $request)
     {
         if (!Auth::check()) {
-            return response()->json(['message' => 'غير مسموح، المرجو تسجيل الدخول'], 403);
+            return response()->json(['message' => __('vocab.not_authorized')], 403);
         }
         // Validate the request data
         $validatedData = $request->validate([
@@ -103,9 +121,9 @@ class StudentController extends Controller
             // Create a new Student object and assign the validated data
             $student = Student::create($validatedData);
             // Return a response
-            return response()->json(['message' => 'تمت الاضافة بنجاح', 'student' => $student], 201);
+            return response()->json(['message' => __('vocab.action_success'), 'student' => $student], 201);
         } catch (Exception $exception) {
-            return response()->json(['message' => 'العملية لم تتم بنجاح، المرجو اعادة المحاولة' . $exception->getMessage()], 404);
+            return response()->json(['message' => __('vocab.task_failed') . ' ' . __('vocab.try_again') . $exception->getMessage()], 404);
         }
     }
 
@@ -116,7 +134,7 @@ class StudentController extends Controller
     public function update(Request $request, Student $student)
     {
         if (!Auth::user()->hasRole('admin') && Auth::user()->id !== $student->classe->userId) {
-            return response()->json(['message' => 'تم الرفض، لا تمتلك التفويض الكافي للقيام بالعملية'], 403);
+            return response()->json(['message' => __('vocab.not_authorized')], 403);
         }
         $validatedData = $request->validate([
             'num' => 'required|numeric',
@@ -126,9 +144,9 @@ class StudentController extends Controller
             // Save the student
             $student->update($validatedData);
 
-            return response()->json(['message' => 'تم التعديل بنجاح', 'student' => $student], 200);
+            return response()->json(['message' => __('vocab.update_success'), 'student' => $student], 200);
         } catch (Exception $exception) {
-            return response()->json(['message' => 'لم يتم التعديل بنجاح، المرجو اعادة المحاولة' . $exception->getMessage()], 404);
+            return response()->json(['message' => __('vocab.update_failure') . ' ' . __('vocab.try_again') . $exception->getMessage()], 404);
         }
     }
 
@@ -142,12 +160,12 @@ class StudentController extends Controller
             !Auth::user()->hasRole('admin') &&
             !(Auth::user()->id === $student->classe->userId)
         ) {
-            return response()->json(['message' => 'تم الرفض، لا تمتلك التفويض الكافي للقيام بالعملية'], 403);
+            return response()->json(['message' => __('vocab.not_authorized')], 403);
         }
         // Soft delete the student
         $student->delete();
         // Return a response
-        return response()->json(['message' => 'تم الحدف بنجاح'], 200);
+        return response()->json(['message' => __('vocab.delete_success')], 200);
     }
 
     public function upload(Request $request)
@@ -261,7 +279,7 @@ class StudentController extends Controller
             $csv = Writer::createFromFileObject(new SplTempFileObject());
 
             // Add headers to the CSV
-            $headers = ['id', 'Code', 'firstName', 'lastName', 'num', 'imageId', 'classeId'];
+            $headers = ['id', 'Code', 'firstName', 'lastName', 'firstNameFr', 'lastNameFr', 'firstNameEn', 'lastNameEn', 'firstNameZ', 'lastNameZ', 'num', 'imageId', 'classeId'];
             $csv->insertOne($headers);
 
             // Add students to the CSV
@@ -271,6 +289,12 @@ class StudentController extends Controller
                     $student->code,
                     $student->firstName,
                     $student->lastName,
+                    $student->firstNameFr,
+                    $student->lastNameFr,
+                    $student->firstNameEn,
+                    $student->lastNameEn,
+                    $student->firstNameZ,
+                    $student->lastNameZ,
                     $student->imageId,
                     $student->classeId,
                 ];

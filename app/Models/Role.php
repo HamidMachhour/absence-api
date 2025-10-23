@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Support\Facades\Session;
 
 class Role extends Model
 {
@@ -15,8 +16,21 @@ class Role extends Model
     protected $fillable = [
         'name',
         'nameFr',
-        'nameEn'
+        'nameEn',
+        'nameZ'
     ];
 
+    public function roleName()
+    {
+        $locale = Session::get('locale', 'en'); // Get the locale from the session, with 'en' as the default
 
+        if ($locale == 'ar') {
+            return $this->name;
+        } elseif ($locale == 'fr') {
+            return $this->nameFr;
+        } elseif ($locale == 'en') {
+            return $this->nameEn;
+        }
+        return $this->nameZ;
+    }
 }

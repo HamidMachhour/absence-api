@@ -1,13 +1,28 @@
-<x-layout>
-    <x-classeinf-card :classe="$student->classe" />
+@extends('layouts.master')
 
-    <div class="mx-4">
-        <x-card class="p-10">
+@section('title')
+{{__('vocab.student').' '.__('vocab.info')}}@endsection
+
+@section('css')
+@endsection
+
+@section('main-page')
+    <a href="{{ route('students.index',['classeId'=>$student->classeId]) }}"> التلاميد</a>
+@endsection
+
+@section('page')
+{{__('vocab.student').' '.__('vocab.info')}}@endsection
+
+@section('content')
+
+<x-classeinf-card :classe="$student->classe" />
+
+        <x-card :title='$student->user->fullName() '>
             <div class="flex flex-col items-center justify-center text-center">
                 <div class="flex flex-row items-center justify-center">
                     <div class="d-flex flex-column">
                         <a href="{{ route('userImages.show', ['user' => $student->userId]) }}">
-                            <img class="rounded-xl w-48" src="{{ $student->studentImage->uri ?? asset('/images/no-image.png') }}"
+                            <img class="rounded-xl w-48" src="{{ $student->studentImage->uri ?? asset('/assets/images/no-image.png') }}"
                                 alt="" />
                         </a>
                     </div>
@@ -19,17 +34,12 @@
                         @endif
                     @endauth
                 </div>
-                <h3 class="text-2xl mb-2">
-                    رقم التلميد في القسم: {{ $student->num }}
-                </h3>
-
-                <div>
-                    <h3 class="text-2xl font-bold mb-4">الاسم الكامل</h3>
-                    <div class="text-lg space-y-6">
-                        {{ $student->user->firstName . ' ' . $student->user->lastName }}
-                    </div>
+                <div class="text-2xl mb-2">
+                {{__('vocab.num')}} : {{ $student->num }}
                 </div>
             </div>
         </x-card>
-    </div>
-</x-layout>
+@endsection
+
+@section('scripts')
+@endsection

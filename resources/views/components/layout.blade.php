@@ -10,7 +10,7 @@
     <link rel="stylesheet" href="{{ asset('css/app.css') }}" />
     <script src="{{ asset('js/app.js') }}"></script>
 
-    <title>ابن هاني | منضومة تسجيل الغياب</title>
+    <title>{{__('vocab.platform')}} {{__('vocab.absence')}}</title>
 </head>
 
 <body>
@@ -19,12 +19,12 @@
             <div class="bg-gray-200 w-full right-0 flex flex-wrap items-center justify-between p-2 gap-2">
 
                 <div class="relative flex rounded-lg border-1 mr-2">
-                    <a href="{{ route('home.route') }}" class="relative left-0 items-center  ">
+                    <a href="{{ route('home') }}" class="relative left-0 items-center  ">
                         <img src="{{ asset('images/logo.png') }}" class="h-8" alt="Manech logo" />
                     </a>
                     <form action="{{ url()->current() }}" class="relative left-3">
                         <input type="text" name="search"
-                            class="h-8 text-right w-full pr-20 rounded-lg border-1 focus:outline-none"
+                            class="h-8  w-full pr-20 rounded-lg border-1 focus:outline-none"
                             placeholder="...بحث" />
                         <div class="absolute top-1 right-2">
                             <button type="submit"
@@ -35,7 +35,7 @@
                     </form>
                 </div>
                 <button data-collapse-toggle="navbar-default" type="button"
-                    class="inline-flex items-center p-2 w-10 h-10 justify-center text-sm text-gray-500 rounded-lg border-1 md:hidden hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200 dark:text-gray-400 dark:hover:bg-gray-700 dark:focus:ring-gray-600"
+                    class="inline-flex items-center p-2 w-10 h-10 justify-center text-sm text-gray-500 rounded-lg border-1 md:hidden hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200 dark:text-gray-700 dark:hover:bg-gray-700 dark:focus:ring-gray-600"
                     aria-controls="navbar-default" aria-expanded="false">
                     <span class="sr-only"></span>
                     <svg class="w-5 h-5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none"
@@ -53,14 +53,14 @@
                             <a href="{{ route('classes.index') }}"
                                 class="block m-1 p-1 rounded-lg border-1  hover:bg-orange-200 ">
                                 <i class="fa-solid fa-cubes"></i>
-                                الأقسام</a>
+                                {{__('vocab.classes')}}</a>
                         </li>
                         @auth
                             <li>
                                 <a href="{{ route('seances.manage') }}"
                                     class="block m-1 p-1 rounded-lg border-1  hover:bg-orange-200 ">
                                     <i class="fa-solid fa-clock"></i>
-                                    الحصص الزمنية</a>
+                                    {{__('vocab.time_quotas')}} </a>
                             </li>
                             @if (auth()->user()->hasRole('admin') ||
                                     auth()->user()->hasRole('manager'))
@@ -68,23 +68,23 @@
                                     <a href="{{ route('classes.manage') }}"
                                         class="block m-1 p-1 rounded-lg border-1  hover:bg-orange-200 ">
                                         <i class="fa-solid fa-heart"></i>
-                                        أقسامي</a>
+                                       {{__('vocab.my_classes')}}</a>
                                 </li>
                                 <li>
-                                    <a href="{{ route('candidates.index') }}"
+                                    <a href="{{ route('enrollments.index') }}"
                                         class="block m-1 p-1 rounded-lg border-1  hover:bg-orange-200 ">
                                         <i class="fa-solid fa-hand"></i>
-                                        طلبات التسجيل
-                                        <sup class="text-red-500">{{ auth()->user()->nbCandidates() }} </sup>
+                                        {{__('vocab.enrollments')}}
+                                        <sup class="text-red-500">{{ auth()->user()->nbMyEnrollments() }} </sup>
                                     </a>
                                 </li>
                             @elseif (auth()->user()->hasRole('teacher'))
                                 <li>
-                                    <a href="{{ route('appels.show', ['appel' => auth()->user()->appel()]) }}"
+                                    <a href="{{ route('attendances.show', ['attendance' => auth()->user()->attendance()]) }}"
                                         class="block m-1 p-1 rounded-lg border-1  hover:bg-orange-200 ">
                                         <i class="fa-solid fa-hand"></i>
-                                        الغائبون
-                                        <sup class="text-red-500">{{ count(auth()->user()->appel()->appelStudents) ?? '0' }}
+                                        {{__('vocab.absences')}}
+                                        <sup class="text-red-500">{{ count(auth()->user()->attendance()->attendanceStudents) ?? '0' }}
                                         </sup>
                                     </a>
                                 </li>
@@ -93,7 +93,7 @@
                                 <a href="{{ route('users.show', ['user' => auth()->user()]) }}"
                                     class="block m-1 p-1 rounded-lg border-1  hover:bg-orange-200 ">
                                     <i class="fa-solid fa-user-circle"></i>
-                                    {{ auth()->user()->firstName }}
+                                    {{ auth()->user()->fullName() }}
                                 </a>
                             </li>
                             <li>
@@ -101,7 +101,7 @@
                                     action="{{ route('users.logout', ['user' => auth()->user()->id]) }}">
                                     @csrf
                                     <button type="submit" class="block m-1 p-1 rounded-lg border-1  hover:bg-orange-200 ">
-                                        <i class="fa-solid fa-door-open "></i> خروج
+                                        <i class="fa-solid fa-door-open "></i> {{__('vocab.logout')}}
                                     </button>
                                 </form>
                             </li>
@@ -110,13 +110,13 @@
                                 <a aria-current="page" href="{{ route('users.register') }}"
                                     class="block m-1 p-1 rounded-lg border-1  hover:bg-orange-200 ">
                                     <i class="fa-solid fa-user-plus"></i>
-                                    تسجيل</a>
+                                    {{__('vocab.register')}}</a>
                             </li>
                             <li>
                                 <a href="{{ route('users.login') }}"
                                     class="block m-1 p-1 rounded-lg border-1  hover:bg-orange-200 "><i
                                         class="fa-solid fa-arrow-right-to-bracket"></i>
-                                    دخول</a>
+                                    {{__('vocab.login')}}</a>
                             </li>
                         @endauth
                     </ul>

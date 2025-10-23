@@ -1,56 +1,88 @@
-<x-layout>
+@extends('layouts.master')
 
-    <x-card class="p-10 max-w-lg mx-auto mt-24">
-        <header class="text-center">
-            <h2 class="text-2xl font-bold mb-1">تغيير المعطيات</h2>
-            @if (Auth::user()->hasRole('admin') || Auth::user()->id === $student->user->id)
-            <a href="{{ route('users.edit', ['user' => $student->user]) }}" class="hover:text-green-700">
-                <p class="mb-4">{{ $student->user->firstName }}<span> {{ $student->user->lastName }}</p>
-            </a>
-            @else
-            <p class="mb-4">{{ $student->user->firstName }}<span> {{ $student->user->lastName }}</p>
-            @endif
-        </header>
+@section('title')
+{{__('vocab.edit')}} {{__('vocab.info')}}
+@endsection
 
-        <form method="POST" action="{{ route('students.update', ['student' => $student->id]) }}"
-            enctype="multipart/form-data">
-            @csrf
-            @method('PUT')
+@section('css')
+@endsection
 
-            <div class="mb-6 text-right">
-                <label for="num" class="inline-block text-lg mb-2">رقم التلميد</label>
-                <input type="text" class="border border-gray-200 rounded text-orange-600 p-2 w-full text-right"
-                    name="num" id="num" placeholder="Example: 1,2,3,...,20" value="{{ $student->num }}" />
+@section('main-page')
+    <a href="{{ route('students.manage',['classe'=>$student->classeId]) }}">{{__('vocab.class_management')}}</a>
+@endsection
 
-                @error('num')
-                    <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                @enderror
+@section('page-title')
+{{__('vocab.edit')}} {{__('vocab.info')}}
+@endsection
+
+@section('page')
+{{__('vocab.edit')}} {{__('vocab.info')}}
+@endsection
+@section('content')
+    <section class="content">
+        <div class="container-fluid">
+            <div class="row">
+                <!-- left column -->
+                <div class="col-md-12">
+                    <div class="card card-primary">
+                        <div class="card-header">
+                            <h3 class="card-title">{{__('vocab.edit')}} {{__('vocab.info')}}
+                            </h3><br>
+                            <p class="mb-4">{{ $student->user->fullName() }}</p>
+                            @error('message')
+                                <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                            @enderror
+                        </div>
+                        @csrf
+                        <div class='card-body'>
+                            <form method="POST" action="{{ route('students.update', ['student' => $student->id]) }}"
+                                enctype="multipart/form-data">
+                                @csrf
+                                @method('PUT')
+
+                                <div class="form-group ">
+                                    <label for="num" >{{__('vocab.num')}}</label>
+                                    <input type="text" class="form-control  "
+                                        name="num" id="num" placeholder="Example: 1,2,3,...,20" value="{{ $student->num }}" />
+
+                                    @error('num')
+                                        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                                    @enderror
+                                </div>
+
+                                <div class="form-group ">
+                                    <label for="classeId" >{{__('vocab.class')}}</label>
+                                    <select id="classeId" name="classeId"
+                                        class="form-control  ">
+                                        @foreach ($classes as $classe)
+                                            <option value="{{ $classe->id }}" {{ $classe->id === $student->classeId ? 'selected' : '' }}>
+                                                {{ $classe->classeName() }}</option>
+                                        @endforeach
+                                    </select>
+                                    @error('classeId')
+                                        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                                    @enderror
+                                </div>
+
+                                <div class="card-footer ">
+                                    <button type="submit" class="btn  btn-outline-success">
+                                        <i class="fa-solid fa-save"></i>
+                                        {{__('vocab.save')}}
+                                    </button>
+                                    <a href="javascript:history.back()" class=" btn btn-outline-primary">
+                                        <i class="fa-solid fa-circle-arrow-left"></i>
+                                        {{__('vocab.go_back')}}
+                                    </a>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
             </div>
+        </div>
 
-            <div class="flex items-center  justify-center text-right col-span-2">
+        <x-flash-message />
+    @endsection
 
-                <select id="classeId" name="classeId"
-                    class="select border-1 border-gray-200 rounded-md text-orange-600 text-right">
-                    @foreach ($classes as $classe)
-                        <option value="{{ $classe->id }}" {{ $classe->id === $student->classeId ? 'selected' : '' }}>
-                            {{ $classe->name }}</option>
-                    @endforeach
-                </select>
-                <label for="classeId" class="inline-block text-lg mb-2">القسم</label>
-                @error('classeId')
-                    <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                @enderror
-            </div>
-
-            <div class="mb-6 text-right">
-                <a href="{{ route('students.index') }}?classeId={{ $student->classeId }}"
-                    class="text-orange-600 hover:text-green-700"> رجوع </a>
-
-                <button class="bg-orange-600 text-white rounded py-2 px-4 hover:bg-green-700">
-                    حفظ
-                </button>
-
-            </div>
-        </form>
-    </x-card>
-</x-layout>
+    @section('scripts')
+    @endsection

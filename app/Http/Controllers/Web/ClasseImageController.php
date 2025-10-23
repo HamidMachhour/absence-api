@@ -28,7 +28,7 @@ class ClasseImageController extends Controller
     public function setDefault(Classe $classe, ClasseImage $image)
     {
         if (Auth::user()->id !== $classe->userId && !Auth::user()->hasRole('admin')) {
-            return redirect()->route('home.route')->with('message',  'غير مسموح');
+            return redirect()->route('home')->with('message',  __('vocab.not_authorized'));
         }
         $controller = new V1ClasseImageController();
         $response = $controller->setDefault($classe,$image);
@@ -42,7 +42,7 @@ class ClasseImageController extends Controller
             $message = isset($data['message']) ? $data['message'] : 'Image set as default successfully';
             //get token and save
         } else {
-            $message = isset($data['message']) ? $data['message'] : 'Action failed.';
+            $message = isset($data['message']) ? $data['message'] : __('vocab.action_failure');
         }
         return redirect()->route('classeImages.index',['classe'=>$classe])->with('message', $message);
     }
@@ -53,7 +53,7 @@ class ClasseImageController extends Controller
      */
     public function create(Classe $classe) {
         if (Auth::user()->id !== $classe->userId && !Auth::user()->hasRole('admin')) {
-            return redirect()->route('home.route')->with('message', 'غير مسموح');
+            return redirect()->route('home')->with('message', __('vocab.not_authorized'));
         }
 
         return view('classeImages.create',['classe' =>$classe]);
@@ -77,7 +77,7 @@ class ClasseImageController extends Controller
             $message = isset($data['message']) ? $data['message'] : 'Store Image added!';
             return redirect()->route('classeImages.index',['classe'=>$request->get('classeId')])->with('message', $message);
         }else{
-            $message = isset($data['message']) ? $data['message'] : 'لم تتم العملية بنجاح، المرجو اعادة المحاولة';
+            $message = isset($data['message']) ? $data['message'] : __('vocab.action_failure').' '.__('vocab.try_again');
             return back()->withErrors(['message' => $message]);;
         }
     }
@@ -125,8 +125,8 @@ class ClasseImageController extends Controller
      */
     public function destroy(ClasseImage $image)
     {
-        if (Auth::user()->id !== $image->classe->userId) {
-            return redirect()->route('home.route')->with('message', 'غير مسموح');
+        if (Auth::user()->id !== $image->classe->userId && !Auth::user()->hasRole('admin')) {
+            return redirect()->route('home')->with('message', __('vocab.not_authorized'));
         }
         $controller = new V1ClasseImageController();
         $response = $controller->destroy($image);
@@ -135,12 +135,12 @@ class ClasseImageController extends Controller
         $data = json_decode($responseContent, true); // true to convert to an associative array
 
 
-        if ($status_code === 200) {
+        if ($status_code === 201) {
             // update successful
             $message = isset($data['message']) ? $data['message'] : 'Image deleted successfully';
             //get token and save
         } else {
-            $message = isset($data['message']) ? $data['message'] : 'الحدف لم تتم بنجاح';
+            $message = isset($data['message']) ? $data['message'] : __('vocab.delete_failed');
         }
         return redirect()->route('classeImages.index',['classe'=>$image->classeId])->with('message', $message);
 

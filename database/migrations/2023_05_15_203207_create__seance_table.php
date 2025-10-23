@@ -1,6 +1,5 @@
 <?php
 
-use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
@@ -16,16 +15,16 @@ class CreateSeanceTable extends Migration
     {
         Schema::create('Seance', function (Blueprint $table) {
             
-            $now=Carbon::now();
+            $now=new DateTime();
 
             $table->uuid('id')->primary();
-            $table->text('matiereId');
-            $table->text('profId');
-            $table->text('classeId');
-            $table->text('jourId');
+            $table->string('subjectId',255);
+            $table->string('teacherId',255);
+            $table->string('classeId',255);
+            $table->unsignedBigInteger('dayId');
             $table->text('salle')->nullable();
-            $table->timestamp('de')->default($now)->nullable();
-            $table->timestamp('a')->default($now->addHour())->nullable();;
+            $table->time('de')->default('08:00')->nullable();
+            $table->time('a')->default('09:00')->nullable();
 
             $table->text('deleted_at')->nullable();
             $table->timestamps();

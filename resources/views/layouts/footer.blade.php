@@ -9,7 +9,9 @@
 <!-- Bootstrap 4 -->
 <script src="{{ URL::asset('assets/plugins/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
 <!-- ChartJS -->
+
 <script src="{{ URL::asset('assets/plugins/chart.js/Chart.min.js') }}"></script>
+{{--
 <!-- Sparkline -->
 <script src="{{ URL::asset('assets/plugins/sparklines/sparkline.js') }}"></script>
 <!-- JQVMap -->
@@ -25,16 +27,20 @@
 </script>
 <!-- Summernote -->
 <script src="{{ URL::asset('assets/plugins/summernote/summernote-bs4.min.js') }}"></script>
-<!-- overlayScrollbars -->
-<script src="{{ URL::asset('assets/plugins/overlayScrollbars/js/jquery.overlayScrollbars.min.js') }}"></script>
-<!-- AdminLTE App -->
+<!-- overlayScrollbars --> --}}
+{{-- <script src="{{ URL::asset('assets/plugins/overlayScrollbars/js/jquery.overlayScrollbars.min.js') }}"></script>
+<!-- AdminLTE App --> --}}
 <script src="{{ URL::asset('assets/js/adminlte.js') }}"></script>
 
-<script src="{{ asset('js/app.js') }}"></script>
+<script src="{{ URL::asset('assets/plugins/toastr/toastr.min.js') }}"></script>
 
-<!-- AdminLTE for demo purposes -->
-{{-- <script src="{{ URL::asset('assets/js/demo.js') }}"></script>
-<!-- AdminLTE dashboard demo (This is only for demo purposes) -->
-<script src="{{ URL::asset('assets/js/pages/dashboard.js') }}"></script> --}}
+<script src="{{ URL::asset('assets/js/app.js') }}"></script>
+
+<script>
+    // Initialize all toasts on the page
+    $(document).ready(function(){
+        $('.toast').toast('show');
+    });
+</script>
 
 @yield('scripts')

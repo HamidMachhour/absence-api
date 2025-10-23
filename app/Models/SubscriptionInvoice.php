@@ -6,7 +6,7 @@
 
 namespace App\Models;
 
-use Carbon\Carbon;
+use DateTime;
 use Illuminate\Database\Eloquent\SoftDeletes;
 /**
  * Class SubscriptionInvoice
@@ -16,9 +16,9 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property string|null $subscriptionId
  * @property float|null $amount
  * @property string|null $status
- * @property Carbon|null $due_date
- * @property Carbon $created_at
- * @property Carbon $updated_at
+ * @property DateTime|null $due_date
+ * @property DateTime $created_at
+ * @property DateTime $updated_at
  *
  * @package App\Models
  */

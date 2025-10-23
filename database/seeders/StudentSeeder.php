@@ -15,11 +15,11 @@ class StudentSeeder extends Seeder
     public function run()
     {
         // Clear  table
-        DB::table('Student')->truncate();
+        //DB::table('Student')->truncate();
 
         $faker = Faker::create();
         $classeIds = Classe::pluck('id')->toArray();
-        $userIds = UserRole::whereRelation('role','nameEn','student')->pluck('user_id')->toArray();
+        $userIds = UserRole::whereRelation('role','nameEn','student')->pluck('userId')->toArray();
 
         foreach ($classeIds as $classeId) {
             // create 20 students

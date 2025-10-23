@@ -13,7 +13,7 @@ class ClasseImageSeeder extends Seeder
     public function run()
     {
         // Clear  table
-        DB::table('ClasseImage')->truncate();
+        //DB::table('ClasseImage')->truncate();
 
         $faker = FakerFactory::create();
 
@@ -28,7 +28,7 @@ class ClasseImageSeeder extends Seeder
                     'id' => $id,
                     'classeId' => $classe->id,
                     //'uri' => $faker->imageUrl(),
-                    'uri' => customImageUrl(640, 480, $faker->hexColor, $classe->name),
+                    'uri' => customImageUrl(640, 480, $faker->hexColor, $classe->classeName()),
                 ]);
                 if (!$classe->imageId)
                     $classe->update(['imageId' => $image->id]);

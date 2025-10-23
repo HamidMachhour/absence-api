@@ -1,130 +1,154 @@
-<x-layout>
-    <x-card class="p-10 max-w-lg mx-auto">
-        <header class="text-center">
-            <h2 class="text-2xl font-bold uppercase mb-1">حصة جديدة</h2>
-        </header>
-        <form method="POST" action="{{ route('seances.store') }}">
-            @csrf
-            <div class="grid grid-cols-1">
- 
-                <div class="grid grid-cols-3 items-center   text-right">
-                    @error('profId')
-                        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                    @enderror
+@extends('layouts.master')
 
-                    <select id="profId" name="profId"
-                        class="select col-span-1 border-1 border-gray-200 rounded-md text-orange-600 text-right">
-                        <option value=""></option>
-                        @foreach ($teachers as $teacher)
-                            <option value="{{ $teacher->id }}">
-                                {{ $teacher->firstName . ' ' . $teacher->lastName }}</option>
-                        @endforeach
-                    </select>
-                    <label for="profId" class="col-span-1 text-lg mb-2">الاستاد</label>
+@section('title')
+    {{__('vocab.new_seance')}}
+@endsection
 
-                </div>
-                <div class="grid grid-cols-3 items-center   text-right">
-                    @error('classeId')
-                        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                    @enderror
-                    <select id="classeId" name="classeId"
-                        class="select col-span-1 border-1 border-gray-200 rounded-md text-orange-600 text-right">
-                        <option value=""></option>
-                        @foreach ($classes as $classe)
-                            <option value="{{ $classe->id }}">
-                                {{ $classe->name }}</option>
-                        @endforeach
-                    </select>
-                    <label for="classeId" class="col-span-1 text-lg mb-2">القسم</label>
+@section('css')
+@endsection
 
-                </div>
-                <div class="grid grid-cols-3 items-center   text-right">
-                    @error('matiereId')
-                        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                    @enderror
-                    <select id="matiereId" name="matiereId"
-                        class="select col-span-1 border-1 border-gray-200 rounded-md text-orange-600 text-right">
-                        <option value=""></option>
-                        @foreach ($matieres as $matiere)
-                            <option value="{{ $matiere->id }}">
-                                {{ $matiere->name }}</option>
-                        @endforeach
-                    </select>
-                    <label for="matiereId" class="col-span-1 text-lg mb-2">المادة</label>
+@section('main-page')
+    <a href="{{ route('seances.manage') }}">{{__('vocab.time_quotas')}} 
+    </a>
+@endsection
 
-                </div>
-                <div class="grid grid-cols-3 items-center   text-right">
-                    @error('jourId')
-                        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                    @enderror
-                    <select id="jourId" name="jourId"
-                        class="select col-span-1 border-1 border-gray-200 rounded-md text-orange-600 text-right">
-                        <option value=""></option>
-                        @foreach ($jours as $jour)
-                            <option value="{{ $jour->id }}">
-                                {{ $jour->name }}</option>
-                        @endforeach
-                    </select>
-                    <label for="jourId" class="col-span-1 text-lg mb-2">اليوم</label>
+@section('page-title')
+    {{__('vocab.new_seance')}}
+@endsection
 
-                </div>
+@section('page')
+    {{__('vocab.new_seance')}}
+@endsection
+@section('content')
+    <section class="content">
+        <div class="container-fluid">
+            <div class="row">
+                <!-- left column -->
+                <div class="col-md-12">
+                    <div class="card card-primary">
+                        <div class="card-header">
+                            <h3 class="card-title">  {{__('vocab.new_seance')}}
+                            </h3>
+                            @error('message')
+                                <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                            @enderror
+                        </div>
+                        @csrf
+                        <div class='card-body'>
+                            <form method="POST" action="{{ route('seances.store') }}">
+                                @csrf
 
-                <div class="grid grid-cols-3 items-center   text-right">
-                    @error('de')
-                        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                    @enderror
-                    <select id="de" name="de"
-                        class="select col-span-1 border-1 border-gray-200 rounded-md text-orange-600 text-right">
-                        <option value=""></option>
-                        @foreach ($hours as $hour)
-                            <option value="{{ $hour }}">
-                                {{ $hour }}</option>
-                        @endforeach
-                    </select>
-                    <label for="de" class="col-span-1 text-lg mb-2">من</label>
+                                <div class="form-group ">
+                                    <label for="teacherId">{{__('vocab.teacher')}}</label>
+                                    <select id="teacherId" name="teacherId" class="form-control  ">
+                                        <option value=""></option>
+                                        @foreach ($teachers as $teacher)
+                                            <option value="{{ $teacher->id }}">
+                                                {{ $teacher->fullName()  }}</option>
+                                        @endforeach
+                                    </select>
+                                    @error('teacherId')
+                                        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                                    @enderror
+                                </div>
+                                <div class="form-group ">
+                                    <label for="classeId">{{__('vocab.class')}}</label>
+                                    <select id="classeId" name="classeId" class="form-control  ">
+                                        <option value=""></option>
+                                        @foreach ($classes as $classe)
+                                            <option value="{{ $classe->id }}">
+                                                {{ $classe->classeName() }}</option>
+                                        @endforeach
+                                    </select>
+                                    @error('classeId')
+                                        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                                    @enderror
+                                </div>
+                                <div class="form-group ">
+                                    <label for="subjectId">{{__('vocab.subject')}}</label>
+                                    <select id="subjectId" name="subjectId" class="form-control  ">
+                                        <option value=""></option>
+                                        @foreach ($subjects as $subject)
+                                            <option value="{{ $subject->id }}">
+                                                {{ $subject->subjectName() }}</option>
+                                        @endforeach
+                                    </select>
+                                    @error('subjectId')
+                                        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                                    @enderror
+                                </div>
+                                <div class="form-group ">
+                                    <label for="dayId">{{__('vocab.day')}}</label>
+                                    <select id="dayId" name="dayId" class="form-control  ">
+                                        <option value=""></option>
+                                        @foreach ($jours as $day)
+                                            <option value="{{ $day->id }}">
+                                                {{ $day->dayName() }}</option>
+                                        @endforeach
+                                    </select>
+                                    @error('dayId')
+                                        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                                    @enderror
+                                </div>
 
-                </div>
+                                <div class="form-group ">
+                                    <label for="de">{{__('vocab.from')}}</label>
+                                    <select id="de" name="de" class="form-control  ">
+                                        <option value=""></option>
+                                        @foreach ($hours as $hour)
+                                            <option value="{{ $hour }}">
+                                                {{ $hour }}</option>
+                                        @endforeach
+                                    </select>
+                                    @error('de')
+                                        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                                    @enderror
+                                </div>
 
-                <div class="grid grid-cols-3 items-center   text-right">
-                    @error('a')
-                        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                    @enderror
-                    <select id="a" name="a"
-                        class="select col-span-1 border-1 border-gray-200 rounded-md text-orange-600 text-right">
-                        <option value=""></option>
-                        @foreach ($hours as $hour)
-                            <option value="{{ $hour }}">
-                                {{ $hour }}</option>
-                        @endforeach
-                    </select>
-                    <label for="a" class="col-span-1 text-lg mb-2">الى</label>
+                                <div class="form-group ">
+                                    <label for="a">{{__('vocab.to')}}</label>
+                                    <select id="a" name="a" class="form-control  ">
+                                        <option value=""></option>
+                                        @foreach ($hours as $hour)
+                                            <option value="{{ $hour }}">
+                                                {{ $hour }}</option>
+                                        @endforeach
+                                    </select>
+                                    @error('a')
+                                        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                                    @enderror
+                                </div>
 
-                </div>
+                                <div class="form-group ">
+                                    <label for="salle">
+                                        {{__('vocab.room')}}
+                                    </label>
+                                    <input type="number" class="form-control  " name="salle"
+                                        value="{{ old('salle') }}" />
+                                    @error('salle')
+                                        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                                    @enderror
+                                </div>
 
-                <div class="grid grid-cols-3 items-center text-right">
-                    @error('salle')
-                        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                    @enderror
-
-                    <input type="number" class="border text-right border-gray-200 rounded p-2 w-full" name="salle"
-                        value="{{ old('salle') }}" />
-
-                    <label for="salle" class="col-span-1 text-lg mb-2">
-                        القاعة
-                    </label>
-                </div>
-
-                <div class="grid grid-cols-3 items-center gap-2 mt-2">
-                    <button class="bg-orange-600 text-white rounded py-2 px-4 hover:bg-green-700">
-                        اضافة
-                    </button>
-
-                    <a href="javascript:history.back()"
-                        class="bg-gray-200 text-center text-orange-600 rounded py-2 px-4 hover:bg-green-700">
-                        رجوع </a>
+                                <div class="card-footer ">
+                                    <button type="submit" class="btn  btn-outline-success">
+                                        <i class="fa-solid fa-save"></i>
+                                        {{__('vocab.add')}}
+                                    </button>
+                                    <a href="javascript:history.back()" class=" btn btn-outline-primary">
+                                        <i class="fa-solid fa-circle-arrow-left"></i>
+                                        {{__('vocab.go_back')}}
+                                    </a>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
                 </div>
             </div>
+        </div>
 
-        </form>
-    </x-card>
-</x-layout>
+        <x-flash-message />
+@endsection
+
+@section('scripts')
+@endsection

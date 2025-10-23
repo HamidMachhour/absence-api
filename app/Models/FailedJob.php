@@ -6,7 +6,7 @@
 
 namespace App\Models;
 
-use Carbon\Carbon;
+use DateTime;
 use Illuminate\Database\Eloquent\Model;
 
 /**
@@ -18,7 +18,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property string|null $queue
  * @property string|null $payload
  * @property string|null $exception
- * @property Carbon|null $failed_at
+ * @property DateTime|null $failed_at
  *
  * @package App\Models
  */

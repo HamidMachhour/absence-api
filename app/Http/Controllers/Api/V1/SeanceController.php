@@ -3,17 +3,18 @@
 namespace App\Http\Controllers\Api\V1;
 
 use Exception;
-use App\Models\User;
 use App\Models\Seance;
 use League\Csv\Reader;
 use League\Csv\Writer;
 use SplTempFileObject;
-use App\Models\Student;
 
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
-use Illuminate\Support\Carbon;
 use App\Http\Controllers\Controller;
+
+use DateInterval;
+use DateTime;
+
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Response;
@@ -28,17 +29,22 @@ class SeanceController extends Controller
      */
     public function index(Request $request, $page_size = 30)
     {
+        if (!Auth::check()) {
+            return response()->json(['message' => __('vocab.not_authorized')], 403);
+        }
         try {
+
+
             if ($request->filled("page_size"))
                 $page_size = $request->input("page_size");
 
             return Seance::filter($request)
-                ->orderBy("jourId")
+                ->orderBy("dayId")
                 ->orderBy("de")
                 ->latest()
                 ->paginate($page_size);
         } catch (Exception $e) {
-            return response()->json(['message' => 'غير متوفر. ' . $e->getMessage()], 404);
+            return response()->json(['message' => __('vocab.empty') . $e->getMessage()], 404);
         }
     }
 
@@ -50,16 +56,20 @@ class SeanceController extends Controller
      */
     public function show(Request $request, $page_size = 30)
     {
+        if (!Auth::check()) {
+            return response()->json(['message' => __('vocab.not_authorized')], 403);
+        }
         try {
+
             if ($request->filled("page_size"))
                 $page_size = $request->input("page_size");
 
             if (auth()->user()->hasRole('teacher'))
-                $request['profId'] = auth()->user()->id;
+                $request['teacherId'] = auth()->user()->id;
 
             return $this->index($request);
         } catch (Exception $e) {
-            return response()->json(['message' => 'غير متوفر. ' . $e->getMessage()], 404);
+            return response()->json(['message' => __('vocab.empty') . $e->getMessage()], 404);
         }
     }
 
@@ -72,71 +82,83 @@ class SeanceController extends Controller
     public function store(Request $request)
     {
         if (!Auth::check()) {
-            return response()->json(['message' => 'غير مسموح، المرجو تسجيل الدخول'], 403);
+            return response()->json(['message' => __('vocab.not_authorized')], 403);
+        }
+
+
+        if (!Auth::user()->hasRole('admin')) {
+            return response()->json(['message' => __('vocab.not_authorized')], 403);
         }
 
         // Validate the request data
         $validatedData = $request->validate([
-            "profId" => 'required|string',
+            "teacherId" => 'required|string',
             "classeId" => 'required|string',
-            "matiereId" => 'required|string',
-            "jourId" => 'required|integer',
+            "subjectId" => 'required|string',
+            "dayId" => 'required|integer',
             "de" => 'required|string',
             "a" => 'required|string',
+            "salle" => 'nullable|integer',
         ]);
 
-        if (!Auth::user()->hasRole('admin') && Auth::user()->id !== $validatedData["profId"]) {
-            return response()->json(['message' => 'تم الرفض، لا تمتلك التفويض الكافي للقيام بالعملية'], 403);
-        }
-
         try {
-            $de = Carbon::parse($validatedData['de']);
-            $a = Carbon::parse($validatedData['a']);
-            if ($de->eq($a)) {
-                $a = $de->copy();
-                $a->addHour();
-            } elseif ($a->lt($de)) {
-                $t = $a;
+            // Create DateTime objects from your input strings
+            $de = new DateTime($validatedData['de']);
+            $a = new DateTime($validatedData['a']);
+
+            // If 'de' and 'a' are the same, add one hour to 'a'
+            if ($de == $a) {
+                $a->add(new DateInterval('PT1H'));
+            }
+            // If 'a' is before 'de', swap them
+            elseif ($a < $de) {
+                $temp = $a;
                 $a = $de;
-                $de = $t;
+                $de = $temp;
             }
 
-            $validatedData['de'] = $de;
-            $validatedData['a'] = $a;
+            // Now you can use the DateTime objects as needed
+            // For example, to format them back to strings:
+            $validatedData['de'] = $de->format('H:i');
+            $validatedData['a'] = $a->format('H:i');
 
             $exists = $this->seanceOverlap($validatedData);
 
             if ($exists) {
-                return response()->json(['message' => 'لا يمكن اضافة الحصة، يوجد تداخل مع حصة اخرى لنفس القسم'], 405);
+                return response()->json(['message' => __('vocab.seance_overlap')], 405);
             }
 
 
             $seance = Seance::create($validatedData);
 
             // Return a response
-            return response()->json(['message' => 'تمت الاضافة بنجاح', 'seance' => $seance], 201);
+            return response()->json(['message' => __('vocab.action_success'), 'seance' => $seance], 201);
         } catch (Exception $exception) {
-            return response()->json(['message' => 'العملية لم تتم بنجاح، المرجو اعادة المحاولة' . $exception->getMessage()], 404);
+            return response()->json(['message' => __('vocab.task_failed') . ' ' . __('vocab.try_again') . $exception->getMessage()], 404);
         }
     }
+    /**
+     * Check if a seance overlaps with existing seances for the same class and day
+     * @param array $validatedData Contains 'de'(start), 'a'(end), 'classeId', 'dayId'
+     * @return bool True if overlap exists, false otherwise
+     */
 
-    public function seanceOverlap($validatedData)
+    // In V1SeanceController
+    public function seanceOverlap($validatedData): bool
     {
+        $query = Seance::where('classeId', $validatedData["classeId"])
+            ->where('dayId', $validatedData["dayId"]);
 
-        $de = $validatedData['de']->setDate(1, 1, 1);
-        $a = $validatedData['a']->setDate(1, 1, 1);
+        // This is the crucial part that handles all overlap cases
+        $query->where('de', '<', $validatedData['a'])
+            ->where('a', '>', $validatedData['de']);
 
-        $seances = Seance::where('classeId', $validatedData["classeId"])
-            ->where('jourId', $validatedData["jourId"])->get();
-        foreach ($seances as $seance) {
-            $de1 = Carbon::parse($seance->de)->setDate(1, 1, 1);
-            $a1 = Carbon::parse($seance->a)->setDate(1, 1, 1);
-            $min = min($de, $de1);
-            $max = max($a, $a1);
-            if ($max->diffInMinutes($min)  < ($a->diffInMinutes($de) + $a1->diffInMinutes($de1)))
-                return true;
+        // Exclude the current seance from the overlap check (essential for updates)
+        if (isset($validatedData['id'])) {
+            $query->where('id', '!=', $validatedData['id']);
         }
-        return false;
+
+        return $query->exists();
     }
     /**
      * Update the specified resource in storage.
@@ -145,48 +167,57 @@ class SeanceController extends Controller
     public function update(Request $request, Seance $seance)
     {
         if (!Auth::check()) {
-            return response()->json(['message' => 'غير مسموح، المرجو تسجيل الدخول'], 403);
+            return response()->json(['message' => __('vocab.not_authorized')], 403);
         }
-        if (!Auth::user()->hasRole('admin') && Auth::user()->id !== $seance->profId) {
-            return response()->json(['message' => 'تم الرفض، لا تمتلك التفويض الكافي للقيام بالعملية'], 403);
+        if (!Auth::user()->hasRole('admin')) {
+            return response()->json(['message' => __('vocab.not_authorized')], 403);
         }
 
         $validatedData = $request->validate([
-            "profId" => 'required|string',
+            "teacherId" => 'required|string',
             "classeId" => 'required|string',
-            "matiereId" => 'required|string',
-            "jourId" => 'required|integer',
+            "subjectId" => 'required|string',
+            "dayId" => 'required|integer',
             "de" => 'required|string',
             "a" => 'required|string',
+            "salle" => 'nullable|numeric',
         ]);
 
+        $validatedData['id'] = $seance->id;
+
         try {
-            $de = Carbon::parse($validatedData['de']);
-            $a = Carbon::parse($validatedData['a']);
-            if ($de->eq($a)) {
-                $a = $de->copy();
-                $a->addHour();
-            } elseif ($a->lt($de)) {
-                $t = $a;
+            // Create DateTime objects from your input strings
+            $de = new DateTime($validatedData['de']);
+            $a = new DateTime($validatedData['a']);
+
+            // If 'de' and 'a' are the same, add one hour to 'a'
+            if ($de == $a) {
+                $a->add(new DateInterval('PT1H'));
+            }
+            // If 'a' is before 'de', swap them
+            elseif ($a < $de) {
+                $temp = $a;
                 $a = $de;
-                $de = $t;
+                $de = $temp;
             }
 
-            $validatedData['de'] = $de;
-            $validatedData['a'] = $a;
+            // Now you can use the DateTime objects as needed
+            // For example, to format them back to strings:
+            $validatedData['de'] = $de->format('H:i');
+            $validatedData['a'] = $a->format('H:i');
 
             $exists = $this->seanceOverlap($validatedData);
 
             if ($exists) {
-                return response()->json(['message' => 'لا يمكن تعديل الحصة، يوجد تداخل مع حصة اخرى لنفس القسم'], 405);
+                return response()->json(['message' => __('vocab.seance_overlap')], 405);
             }
 
             // Save the seance
             $seance->update($validatedData);
             // Return the updated seance
-            return response()->json(['message' => 'تم التعديل بنجاح', 'seance' => $seance], 200);
+            return response()->json(['message' => __('vocab.update_success'), 'seance' => $seance], 200);
         } catch (Exception $exception) {
-            return response()->json(['message' => 'لم يتم التعديل بنجاح، المرجو اعادة المحاولة' . $exception->getMessage()], 404);
+            return response()->json(['message' => __('vocab.update_failure') . ' ' . __('vocab.try_again') . $exception->getMessage()], 404);
         }
     }
 
@@ -197,171 +228,168 @@ class SeanceController extends Controller
     public function destroy(Seance $seance)
     {
         if (!Auth::check()) {
-            return response()->json(['message' => 'غير مسموح، المرجو تسجيل الدخول'], 403);
+            return response()->json(['message' => __('vocab.not_authorized')], 403);
         }
 
-        if (Auth::user()->id !== $seance->profId && !Auth::user()->hasRole('admin')) {
-            return response()->json(['message' => 'تم الرفض، لا تمتلك التفويض الكافي للقيام بالعملية'], 403);
+        if (!Auth::user()->hasRole('admin')) {
+            return response()->json(['message' => __('vocab.not_authorized')], 403);
         }
-        // Soft delete the store
+        // Soft delete the seance
         $seance->delete();
         // Return a response
-        return response()->json(['message' => 'تم الحدف بنجاح'], 200);
+        return response()->json(['message' => __('vocab.delete_success')], 200);
     }
 
 
-    public function export(Seance $seance)
+    /**
+     * Soft deletes all Seance records.
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function destroyAll(Request $request)
     {
+        if (!Auth::check()) {
+            return response()->json(['message' => __('vocab.not_authorized')], 403);
+        }
+
+        if (!Auth::user()->hasRole('admin')) {
+            return response()->json(['message' => __('vocab.not_authorized')], 403);
+        }
+
+        // Soft delete all seances by updating the deleted_at timestamp
+        Seance::filter($request)->update(['deleted_at' => now()]);
+
+        // Return a response
+        return response()->json(['message' => __('vocab.delete_success')], 200);
+    }
+
+    //function to export seances to excel or csv file
+    public function export(Request $request)
+    {
+
+        // ckeck if the user is admin or manager
+        if (!Auth::user()->hasRole('admin') && !Auth::user()->hasRole('manager')) {
+
+            return response()->json(['message' => __('vocab.not_authorized')], 404);
+        }
         try {
 
-            if (Auth::user()->id !== $seance->user->id) {
-                return response()->json(['message' => 'تم الرفض، لا تمتلك التفويض الكافي للقيام بالعملية'], 403);
-            }
-
-            $students = $seance->students->get();
-
-
-            // Generate the filename for the exported file
-            $fileName = 'Store_' . $seance->id . '_students_' . time() . '.csv';
-
-
+            $fileName = 'seances_export_' . date('Y_m_d_H_i_s') . '.csv';
+            // get seances according to filters
+            $seances = Seance::filter($request)
+                ->latest()
+                ->get();
+            // create csv file
             $csv = Writer::createFromFileObject(new SplTempFileObject());
 
-            // Add headers to the CSV
-            $headers = ['id', 'Code', 'Title', 'Description', 'Base_Price', 'Price', 'Fee', 'Heures', 'Min_Qty', 'Max_Qty', 'Location', 'Published_At', 'Expire_At', 'Image_ID', 'Store_ID', 'Category_ID', 'Tags'];
-            $csv->insertOne($headers);
 
-            // Add students to the CSV
-            foreach ($students as $student) {
+            // add header to csv file
+            $headers = ['id', 'subjectId', 'teacherId', 'classeId', 'dayId', 'salle', 'de', 'a'];
+            $csv->insertOne($headers);
+            // add users to csv file
+            foreach ($seances as $seance) {
                 $itemData = [
-                    $student->id,
-                    $student->code,
-                    $student->title,
-                    $student->description,
-                    $student->basePrice,
-                    $student->price,
-                    $student->fee,
-                    $student->plage,
-                    $student->minQty,
-                    $student->maxQty,
-                    $student->location,
-                    $student->published_at,
-                    $student->expire_at,
-                    $student->imageId,
-                    $student->seanceId,
-                    $student->categoryId,
-                    $student->tags,
+                    $seance->id,
+                    $seance->subjectId,
+                    $seance->teacherId,
+                    $seance->classeId,
+                    $seance->dayId,
+                    $seance->salle,
+                    $seance->de,
+                    $seance->a
                 ];
                 $csv->insertOne($itemData);
             }
-            // Set the response headers
             $headers = [
                 'Content-Type' => 'text/csv',
                 'Content-Disposition' => 'attachment; filename=' . $fileName,
             ];
 
-            // Return the CSV file as a downloadable response
             return Response::make($csv->toString(), 200, $headers);
-        } catch (Exception $exception) {
-            return response()->json(['message' => 'Exporting Failed. ' . $exception->getMessage()], 404);
+        } catch (Exception $e) {
+            return response()->json(['message' => __('vocab.empty') . $e->getMessage()], 404);
         }
     }
 
-    public function import(Request $request, Seance $seance)
+    public function import(Request $request)
     {
-        if (Auth::user()->id !== $seance->userId && !Auth::user()->hasRole('admin')) {
-            return response()->json(['message' => 'Unauthorized action.'], 401);
+        if (!Auth::user()->hasRole('admin')) {
+            return response()->json(['message' => __('vocab.not_authorized')], 403);
         }
-        // Validate the request data
-        $validatedData = $request->validate([
+
+        $request->validate([
             'file' => 'required|file|mimes:csv|max:10240',
         ]);
 
         try {
-            $updated = 0;
             $added = 0;
             $failed = 0;
-            // Generate the filename for the exported summary file
-            $fileName_summary = 'import_summary_' . $seance->id . '_' . time() . '.csv';
+
+            $fileName_summary = 'import_seances_summary_' . time() . '.csv';
             $csv_summary = Writer::createFromFileObject(new SplTempFileObject());
-            // Add headers to the CSV
-            $headers = ['old_id', 'new_id', 'status'];
+            $headers = ['info', 'details', 'status'];
             $csv_summary->insertOne($headers);
 
-
-            // Store the file locally
             $file = $request->file('file');
-            $fileName = 'students-' . Str::uuid() . '.csv';
+            $fileName = 'seances-' . Str::uuid() . '.csv';
             $filePath = $file->storeAs('imports', $fileName, 'public');
 
-            // Read the CSV file
             $csv = Reader::createFromPath(storage_path('app/public/' . $filePath), 'r');
-
             $csv->setHeaderOffset(0);
 
-            // Import the students from the CSV
             foreach ($csv->getRecords() as $record) {
-                $itemData = [
-                    'id' => $record['id'],
-                    'code' => $record['Code'],
-                    'title' => $record['Title'],
-                    'description' => $record['Description'],
-                    'basePrice' => $record['Base_Price'],
-                    'price' => $record['Price'],
-                    'fee' => $record['Fee'],
-                    'plage' => $record['Heures'],
-                    'minQty' => $record['Min_Qty'],
-                    'maxQty' => $record['Max_Qty'],
-                    'location' => $record['Location'],
-                    'published_at' => $record['Published_At'],
-                    'expire_at' => $record['Expire_At'],
-                    'imageId' => $record['Image_ID'],
-                    'categoryId' => $record['Category_ID'],
-                    'tags' => $record['Tags'],
-                    'seanceId' => $seance->id,
-                ];
-
-                // Create/update Student model and save it to the database
                 try {
-                    $student = Student::where('seanceId', $seance->id)
-                        ->findOrFail($itemData['id']);
+                    // Create DateTime objects from your input strings
+                    $de = new DateTime($record['de']);
+                    $a = new DateTime($record['a']);
 
-                    $student->update($itemData);
+                    // If 'de' and 'a' are the same, add one hour to 'a'
+                    if ($de == $a) {
+                        $a->add(new DateInterval('PT1H'));
+                    }
+                    // If 'a' is before 'de', swap them
+                    elseif ($a < $de) {
+                        $temp = $a;
+                        $a = $de;
+                        $de = $temp;
+                    }
 
-                    $csv_summary->insertOne([$student->id, $student->id, 'updated']);
-                    $updated += 1;
+                    // Now you can use the DateTime objects as needed
+                    // For example, to format them back to strings:
+                    $record['de'] = $de->format('H:i');
+                    $record['a'] = $a->format('H:i');
+
+                    $exists = $this->seanceOverlap($record);
+
+                    if ($exists) {
+                        $csv_summary->insertOne([($record['id'] ?? 'error'), implode(', ', $record), 'overlapped']);
+                        $failed++;
+                    } else {
+                        unset($record['id']);
+                        $seance = Seance::create($record);
+                        $csv_summary->insertOne([($record['id'] ?? 'new'), $seance->id, 'added']);
+                        $added++;
+                    }
                 } catch (Exception $e) {
 
-                    try {
-                        $id = $itemData['id'];
-                        unset($itemData['id']);
-                        $student = Student::create($itemData);
-                        $csv_summary->insertOne([$id, $student->id, 'added']);
-                        $added += 1;
-                    } catch (Exception $e) {
-                        $csv_summary->insertOne([$itemData['id'], $student->id, 'failed']);
-                        $failed += 1;
-                    }
+                    $csv_summary->insertOne([($record['id'] ?? 'error'), implode(', ', $record), 'failed']);
+                    $failed++;
                 }
             }
-            // Delete the temporary CSV file
-            File::delete(storage_path('app/public/' . $filePath));
-            // Return a response
 
-            // Set the response headers
+            File::delete(storage_path('app/public/' . $filePath));
+
             $headers = [
                 'Content-Type' => 'text/csv',
                 'Content-Disposition' => 'attachment; filename=' . $fileName_summary,
                 'added' => $added,
-                'updated' => $updated,
                 'failed' => $failed
             ];
 
-            // Return the CSV summary file as a downloadable response
             return Response::make($csv_summary->toString(), 200, $headers);
         } catch (Exception $e) {
             return response()->json([
-                'message' => 'Import failed.' . $e->getMessage()
+                'message' => __('vocab.action_failure') . $e->getMessage()
             ], 404);
         }
     }

@@ -1,46 +1,54 @@
 @props(['seance'])
+ 
+<div class="card card-primary card-outline collapsed-card m-1" :title="">
 
-<x-card>
-    <div class="grid gap-1 mb-2 text-xs">
+    <div class="card-header">
+        <div class="card-title h3 d-flex gap-2">
+            <a href="{{ request()->fullUrlWithQuery(['seanceId' => $seance->id, 'page' => 1]) }}"
+                class="flex text-blue-600 hover:text-gray-700 justify-center">
+                {{ $seance->title() }}
+            </a>
+            <a href="{{ request()->fullUrlWithQuery(['dayId' => $seance->dayId, 'page' => 1]) }}" 
+            class="flex text-blue-600 hover:text-gray-700 justify-center">
+                <i class="fa-solid fa-calendar-days"></i>
+            </a>    
+        </div> 
+        <div class="card-tools">
+            <button type="button" class="btn btn-tool" data-card-widget="collapse">
+                <i class="fas fa-plus"></i>
+            </button>
+        </div>
+    </div>
+    <div class="card-body p-1">
 
         <div class="d-flex flex-column">
             <div>
-                <a href="{{ request()->fullUrlWithQuery(['classeId' =>$seance->classeId, 'page' => 1]) }}"
-                    class="flex text-green-600 hover:text-orange-700 justify-center">
-                    {{ $seance->classe->name }}
+                <a href="{{ request()->fullUrlWithQuery(['classeId' => $seance->classeId, 'page' => 1]) }}"
+                    class="flex text-gray-700 hover:text-blue-600 justify-center">
+                    {{ $seance->classe->classeName() }}
                 </a>
             </div>
             <div>
-                <a href="{{ request()->fullUrlWithQuery(['matiereId' => $seance->matiereId, 'page' => 1]) }}"
-                    class="flex text-orange-600 hover:text-green-700 justify-center">
-                    {{ $seance->matiere->name }}
+                <a href="{{ request()->fullUrlWithQuery(['subjectId' => $seance->subjectId, 'page' => 1]) }}"
+                    class="flex text-blue-600 hover:text-gray-700 justify-center">
+                    {{ $seance->subject->subjectName() }}
                 </a>
             </div>
             <div>
-                <a href="{{ request()->fullUrlWithQuery(['profId' => $seance->profId, 'page' => 1]) }}"
-                    class="flex text-green-600 hover:text-orange-700 justify-center">
-                    {{ $seance->professeur->firstName . ' ' . $seance->professeur->lastName }}
+                <a href="{{ request()->fullUrlWithQuery(['teacherId' => $seance->teacherId, 'page' => 1]) }}"
+                    class="flex text-gray-700 hover:text-blue-600 justify-center">
+                    {{ $seance->teacher->fullName()  }}
                 </a>
             </div>
-            <div class="flex gap-2 items-center text-orange-700 justify-end">
-                <a href="{{ request()->fullUrlWithQuery(['jourId' => $seance->jourId, 'page' => 1]) }}"
-                    class="flex text-orange-600 hover:text-green-700 justify-center">
-                    {{ $seance->jour->name }}
-                </a>
-            </div>
-            <div class="flex gap-2 items-center text-orange-700 justify-end">
-                <div>{{ \Carbon\Carbon::parse($seance->de)->format('H:i') }}</div>
-                ->
-                <div>{{ \Carbon\Carbon::parse($seance->a)->format('H:i') }}</div>
-
-            </div>
-            <div class="flex gap-2 items-center text-orange-700 justify-end">
-                <i class="fa-solid fa-home"></i>
-                <div>{{ $seance->salle }}</div>
-                <div>:القاعة</div>
-            </div>
-
+            <a href="{{ request()->fullUrlWithQuery(['salle' => $seance->salle, 'page' => 1]) }}">
+                <div class="flex gap-2 items-center text-blue-600 hover:text-gray-700 justify-center">
+                    <i class="fa-solid fa-home"></i>
+                    <div>{{ $seance->salle }}</div>
+                    <div>{{__('vocab.room')}}</div>
+                </div>
+            </a>
+            <x-seanceactions-card :seance="$seance" />
         </div>
-        <x-seanceactions-card :seance="$seance" />
+
     </div>
-</x-card>
+</div>

@@ -1,18 +1,18 @@
 @extends('layouts.master')
 
 @section('title')
-    القسم {{ $classe->name }}
+    {{__('vocab.class')}} {{ $classe->classeName() }}
 @endsection
 
 @section('css')
 @endsection
 
 @section('main-page')
-    <a href="{{ route('classes.index') }}"> الاقسام</a>
+    <a href="{{ route('classes.show',['classe'=>$classe]) }}">{{$classe->classeName()}} {{__('vocab.class')}}</a>
 @endsection
 
 @section('page')
-    صور القسم
+{{__('vocab.classe_images')}}
 @endsection
 
 @section('content')
@@ -20,16 +20,17 @@
     @unless ($classe_images->count() == 0)
         @auth
             @if (auth()->user()->hasRole('admin') || $classe->userId === auth()->user()->id)
-                <div class='text-right mr-2'>
+                <div class=' mr-2'>
                     <a href="{{ route('classeImages.create', ['classe' => $classe->id]) }}" class="btn btn-app bg-gray">
-                        <i class="fas fa-plus"></i> اضافة صورة
+                        <i class="fas fa-plus"></i> {{__('vocab.add_image')}}
                     </a>
                 </div>
-                <div class="lg:grid lg:grid-cols-2 gap-2 mx-2">
+                <x-card :title='__("vocab.images")'>
+                <div class="lg:grid lg:grid-cols-2 gap-1 mx-1">
                     @foreach ($classe_images as $classe_image)
                         <div class="col-sm-12">
                             <div class="position-relative">
-                                <img src="{{ $classe_image->uri ?? asset('/images/no-image.png') }}" alt=""
+                                <img src="{{ $classe_image->uri ?? asset('/assets/images/no-image.png') }}" alt=""
                                     class="img-fluid rounded-xl">
                             </div>
                             <div class="position-absolute right-1 top-0">
@@ -37,7 +38,7 @@
                                     class="inline">
                                     @csrf
                                     @method('DELETE')
-                                    <button type="submit" class="btn btn-block bg-danger" onclick="return confirm('حدف الصورة؟')">
+                                    <button type="submit" class="btn btn-block bg-danger" onclick="return confirm('{{__('vocab.are_you_sure')}}')">
                                         <i class="fas fa-cancel"></i>
                                     </button>
                                 </form>
@@ -47,7 +48,7 @@
                                         method="POST" class="inline">
                                         @csrf
                                         <button type="submit" class="btn btn-block bg-success"
-                                            onclick="return confirm('?اختر الصورة كرئيسية في الواجهة')">
+                                            onclick="return confirm('{{__('vocab.are_you_sure')}}')">
                                             <i class="fas fa-check"></i>
                                         </button>
                                     </form>
@@ -60,11 +61,12 @@
                         </div>
                     @endforeach
                 </div>
+                </x-card>
             @else
                 <div class="lg:grid lg:grid-cols-2 gap-2 mx-2">
                     @foreach ($classe_images as $classe_image)
                         <div class="position-relative">
-                            <img src="{{ $classe_image->uri ?? asset('/images/no-image.png') }}" alt=""
+                            <img src="{{ $classe_image->uri ?? asset('/assets/images/no-image.png') }}" alt=""
                                 class="img-fluid rounded-xl">
                         </div>
                     @endforeach
@@ -74,7 +76,7 @@
             <div class="lg:grid lg:grid-cols-2 gap-2 mx-2">
                 @foreach ($classe_images as $classe_image)
                     <div class="position-relative">
-                        <img src="{{ $classe_image->uri ?? asset('/images/no-image.png') }}" alt=""
+                        <img src="{{ $classe_image->uri ?? asset('/assets/images/no-image.png') }}" alt=""
                             class="img-fluid rounded-xl">
                     </div>
                 @endforeach
@@ -87,7 +89,7 @@
         @if (auth()->user()->hasRole('admin') || $classe->userId === auth()->user()->id)
             <div>
                 <a href="{{ route('classeImages.create', ['classe' => $classe->id]) }}" class="btn btn-app bg-gray">
-                    <i class="fas fa-plus"></i> اضافة صورة
+                    <i class="fas fa-plus"></i> {{__('vocab.add_image')}}
                 </a>
             </div>
         @endif

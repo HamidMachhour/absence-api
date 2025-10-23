@@ -20,6 +20,9 @@ class AddressController extends Controller
      */
     public function index(Request $request, $page_size = 6)
     {
+        if (!Auth::check()) {
+            return response()->json(['message' => __('vocab.not_authorized')], 403);
+        }
         try {
             if ($request->filled("page_size"))
                 $page_size = $request->input("page_size");
@@ -31,7 +34,7 @@ class AddressController extends Controller
             // return response()->json(['addresses' => $addresses], 200);
             return $addresses;
         } catch (Exception $e) {
-            return response()->json(['message' => 'غير متوفر. ' . $e->getMessage()], 404);
+            return response()->json(['message' => __('vocab.empty') . $e->getMessage()], 404);
         }
     }
 
@@ -44,7 +47,7 @@ class AddressController extends Controller
     public function store(Request $request)
     {
         if (!Auth::check()) {
-            return response()->json(['message' => 'غير مسموح، المرجو تسجيل الدخول'], 403);
+            return response()->json(['message' => __('vocab.not_authorized')], 403);
         }
 
         // Validate the request data
@@ -67,9 +70,9 @@ class AddressController extends Controller
             $address = Address::create($validatedData);
 
             // Return a response
-            return response()->json(['message' => 'تمت الاضافة بنجاح', 'address' => $address], 201);
+            return response()->json(['message' => __('vocab.action_success'), 'address' => $address], 201);
         } catch (Exception $exception) {
-            return response()->json(['message' => 'العملية لم تتم بنجاح، المرجو اعادة المحاولة' . $exception->getMessage()], 404);
+            return response()->json(['message' => __('vocab.task_failed').' '.__('vocab.try_again') . $exception->getMessage()], 404);
         }
     }
 
@@ -105,7 +108,7 @@ class AddressController extends Controller
     public function update(Request $request, Address $address)
     {
         if (!Auth::check()) {
-            return response()->json(['message' => 'غير مسموح، المرجو تسجيل الدخول'], 403);
+            return response()->json(['message' => __('vocab.not_authorized')], 403);
         }
         if (auth()->user()->id !== $address->userId) {
             return response()->json(['message' => 'Unauthorized, not current user address!'], 403);
@@ -126,9 +129,9 @@ class AddressController extends Controller
         try {
             $address->update($validatedData);
 
-            return response()->json(['message' => 'تم التعديل بنجاح', 'address' => $address], 201);
+            return response()->json(['message' => __('vocab.update_success'), 'address' => $address], 201);
         } catch (Exception $exception) {
-            return response()->json(['message' => 'لم يتم التعديل بنجاح، المرجو اعادة المحاولة' . $exception->getMessage()], 404);
+            return response()->json(['message' => __('vocab.update_failure').' '.__('vocab.try_again') . $exception->getMessage()], 404);
         }
     }
 
@@ -141,11 +144,11 @@ class AddressController extends Controller
     public function destroy(Address $address)
     {
         if (!Auth::check()) {
-            return response()->json(['message' => 'غير مسموح، المرجو تسجيل الدخول'], 403);
+            return response()->json(['message' => __('vocab.not_authorized')], 403);
         }
 
         if (Auth::user()->id !== $address->userId) {
-            return response()->json(['message' => 'تم الرفض، لا تمتلك التفويض الكافي للقيام بالعملية'], 403);
+            return response()->json(['message' => __('vocab.not_authorized')], 403);
         }
         // Soft delete the address
         $address->delete();
@@ -160,11 +163,11 @@ class AddressController extends Controller
     public function setDefault(Address $address)
     {
         if (!Auth::check()) {
-            return response()->json(['message' => 'غير مسموح، المرجو تسجيل الدخول'], 403);
+            return response()->json(['message' => __('vocab.not_authorized')], 403);
         }
 
         if (Auth::user()->id !== $address->userId) {
-            return response()->json(['message' => 'تم الرفض، لا تمتلك التفويض الكافي للقيام بالعملية'], 403);
+            return response()->json(['message' => __('vocab.not_authorized')], 403);
         }
         try {
             $user = User::findOrFail(Auth::user()->id);
@@ -172,7 +175,7 @@ class AddressController extends Controller
             // Return a response
             return response()->json(['message' => 'Address set as default successfully'], 200);
         } catch (Exception $exception) {
-            return response()->json(['message' => 'لم يتم التعديل بنجاح، المرجو اعادة المحاولة' . $exception->getMessage()], 404);
+            return response()->json(['message' => __('vocab.update_failure').' '.__('vocab.try_again') . $exception->getMessage()], 404);
         }
     }
 }

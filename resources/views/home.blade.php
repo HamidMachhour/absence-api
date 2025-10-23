@@ -1,7 +1,7 @@
 @extends('layouts.master')
 
 @section('title')
-منصة ثانوية ابن هاني التأهيلية بفاس
+{{__('vocab.platform')}} {{__('vocab.absence')}}
 @endsection
 
 @section('css')
@@ -10,24 +10,26 @@
 
 @section('preload')
 <div class="preloader flex-column justify-content-center align-items-center">
-    <img class="animation__shake" src="{{ URL::asset('assets/img/logo.png') }}" alt="Manech" height="100"
+    <img class="animation__shake" src="{{ URL::asset('/assets/images/logo.png') }}" alt="Manech" height="100"
         width="100">
 </div>
 @endsection
 @section('main-page')
-<a href="{{route('home.route')}}">الرئيسية</a>
+<a href="{{route('home')}}">{{__('vocab.home')}}</a>
 @endsection
 
 @section('page-title')
-الرئيسية
+{{__('vocab.home')}}
 @endsection
 
 @section('page')
-استقبال
+{{__('vocab.home')}}
 @endsection
 
 @section('content')
-استقبال
+
+@include('layouts.home')
+
 @endsection
 
 @section('scripts')

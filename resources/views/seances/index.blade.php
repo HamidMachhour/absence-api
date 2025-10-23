@@ -1,26 +1,41 @@
-<x-layout>
-    {{--   @if (!Auth::check())
-    @include('partials._hero')
-  @endif --}}
-    {{-- @include('partials._search') --}}
-    <x-card class="flex justify-center text-3xl mb-2">
-        جدول الحصص
-    </x-card>
-    <x-filters-card :params="$params" />
+@extends('layouts.master')
 
-    <div class="lg:grid lg:grid-cols-4 gap-2 mt-2">
+@section('title')
+{{__('vocab.time_quotas')}} 
+@endsection
 
-        @unless (count($seances) == 0)
+@section('css')
+@endsection
 
-            @foreach ($seances as $seance)
-                <x-seance-card :seance="$seance" />
-            @endforeach
-        @else
-            <p>لا شيء</p>
-        @endunless
+@section('main-page')
+    <a href="{{ route('classes.index') }}">{{__('vocab.classes')}}</a>
+@endsection
 
-    </div>
-    <div class="mt-6 p-4">
-        {{ $seances->appends(request()->query->all())->links() }}
-    </div>
-</x-layout>
+@section('page')
+{{__('vocab.time_quotas')}} 
+@endsection
+
+@section('content')
+
+<x-filters-card :params="$params" />
+
+<div class="lg:grid lg:grid-cols-4 mt-1">
+
+    @unless (count($seances) == 0)
+
+        @foreach ($seances as $seance)
+            <x-seance-ro-card :seance="$seance" />
+        @endforeach
+
+        <div class="mt-6 p-4">
+            {{ $seances->appends(request()->query->all())->links() }}
+        </div>
+    @else
+        <p>{{__('vocab.empty')}}</p>
+    @endunless
+</div>
+
+@endsection
+
+@section('scripts')
+@endsection

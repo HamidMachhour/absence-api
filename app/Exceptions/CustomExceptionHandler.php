@@ -22,7 +22,7 @@ class CustomExceptionHandler extends ExceptionHandler
     {
         if ($exception instanceof NotFoundHttpException || $exception instanceof MethodNotAllowedHttpException) {
             // Handle not found or method not allowed exceptions here
-            return redirect()->route('error.route')->with(['message',$exception->getMessage()]);
+            return redirect()->route('error')->with(['message',$exception->getMessage()]);
         }
 
         return parent::render($request, $exception);

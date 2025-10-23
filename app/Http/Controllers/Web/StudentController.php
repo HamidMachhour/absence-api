@@ -9,50 +9,165 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\Api\V1\StudentController as V1StudentController;
-use GuzzleHttp\Psr7\Response;
+use Illuminate\Http\JsonResponse;
+use ArPHP\I18N\Arabic;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\Log;
 
 class StudentController extends Controller
 {
+
+    //print student cards
+    public function printCard(Student $student)
+    {
+        $Arabic = new Arabic();
+        $student->fullName = $Arabic->utf8Glyphs($student->user->fullName());
+        $student->al9ism = $Arabic->utf8Glyphs($student->classe->classeName());
+        $student->ara9m = $student->num;
+
+        $student->qrCodeBase64 = imageToBase64($student->qrCodeImagePath());
+        $student->studentImageBase64 = imageToBase64($student->studentImage->uri ?? public_path('assets/images/no-image.png'));
+        $pdf = Pdf::loadView('students.printCard', [
+            'student' => $student,
+        ])
+            ->setPaper('a4', 'portrait')
+            ->setOption('isHtml5ParserEnabled', true)
+            ->setOption('isRemoteEnabled', true)
+            ->setOption('isFontSubsettingEnabled', true); // important for Arabic
+        // Set filename
+        $filename = 'Student-' . $student->id . '-' . time() . '.pdf';
+
+        // Return the PDF for download
+        return $pdf->download($filename);
+    }
+
+    //print student cards
+    public function printCards(Classe $classe)
+    {
+        $students = $classe->students;
+
+        $students = $classe->students->map(function ($student) {
+            $Arabic = new Arabic();
+            $student->fullName = $Arabic->utf8Glyphs($student->user->fullName());
+            $student->al9ism = $Arabic->utf8Glyphs($student->classe->classeName());
+            $student->ara9m = $student->num;
+
+            Log::info('Student ID: ' . $student->id . ', QR Code Path: ' . $student->qrCodeImagePath());
+
+            $student->qrCodeBase64 = imageToBase64($student->qrCodeImagePath());
+            $student->studentImageBase64 = imageToBase64($student->studentImage->uri ?? public_path('assets/images/no-image.png'));
+            return $student;
+        });
+        $pdf = Pdf::loadView('students.printCards', [
+            'students' => $students,
+            'classe' => $classe,
+        ])
+            ->setPaper('a4', 'portrait')
+            ->setOption('isHtml5ParserEnabled', true)
+            ->setOption('isRemoteEnabled', true)
+            ->setOption('isFontSubsettingEnabled', true) // important for Arabic
+            // 👇 Set Margins Here (in millimeters 'mm')
+            ->setOption('margin-top', 5)
+            ->setOption('margin-right', 5)
+            ->setOption('margin-bottom', 5)
+            ->setOption('margin-left', 5);
+        // Set filename
+        $filename = 'cards-' . $classe->classeName() . '-' . time() . '.pdf';
+
+        // Return the PDF for download
+        return $pdf->download($filename);
+    }
+
+
+    public function getStudents(Request $request, Classe $classe, V1StudentController $v1Controller)
+    {
+        return $v1Controller->getStudents($request, $classe);
+    }
     // Show all students
-    public function index(Request $request)
+    public function index(Request $request, V1StudentController $v1Controller)
     {
         try {
-
-            $v1Controller = new V1StudentController();
             $response = $v1Controller->index($request);
 
-            if (method_exists($response, 'status') && $response->status() == 404){
-                return view('error', ["message" => ' غير متوفر']);
+            if ($response instanceof JsonResponse) {
+                $status = $response->getStatusCode();
+                $data = $response->getData(); // Get the underlying data object from the JSON response
+
+                // Test on response status for errors
+                if ($status === 403 || $status === 404) {
+                    $message = $data->message ?? __('vocab.not_authorized');
+                    return redirect()->route('error', ['message' => $message]);
+                }
             }
 
             $params = $this->prepareFilterParams($request, $response);
 
-            //dd($response);
 
             return view('students.index', [
                 'students' => $response,
                 'params' => $params
             ]);
         } catch (Exception $e) {
-            return view('error', ["message" => 'غير متوفر' . $e->getMessage()]);
+            return view('error', ["message" => __('vocab.empty')  . $e->getMessage()]);
         }
     }
 
-    // Show all authenticated user's students
+
     public function manage(Request $request, Classe $classe)
     {
         if (!Auth::user()->hasRole('admin') && Auth::user()->id !== $classe->userId) {
-            return redirect()->route('home.route')->with('message',  'غير مسموح');
+            return redirect()->route('home')->with('message',  __('vocab.not_authorized'));
         }
         $v1Controller = new V1StudentController();
 
         $response = $v1Controller->show($request, $classe);
-        // Get the HTTP status code from the response
-        if (method_exists($response, 'status') && $response->status() == 404)
-            return view('error', ["message" => ' غير متوفر']);
+
+        if ($response instanceof JsonResponse) {
+            $status = $response->getStatusCode();
+            $data = $response->getData(); // Get the underlying data object from the JSON response
+
+            // Test on response status for errors
+            if ($status === 403 || $status === 404) {
+                $message = $data->message ?? __('vocab.not_authorized');
+                return redirect()->route('error', ['message' => $message]);
+            }
+        }
+
+
         $params = $this->prepareFilterParams($request, $response);
-        $params['classeId'] = 'القسم ' .$classe->name;
+        $params['classeId'] = __('vocab.class') . ' ' . $classe->classeName();
+
         return view('students.manage', [
+            'classe' => $classe,
+            'students' => $response,
+            'params' => $params
+        ]);
+    }
+
+
+    public function cards(Request $request, Classe $classe, V1StudentController $v1Controller)
+    {
+        if (!Auth::user()->hasRole('admin') && Auth::user()->id !== $classe->userId) {
+            return redirect()->route('home')->with('message',  __('vocab.not_authorized'));
+        }
+
+        $response = $v1Controller->show($request, $classe);
+
+        if ($response instanceof JsonResponse) {
+            $status = $response->getStatusCode();
+            $data = $response->getData(); // Get the underlying data object from the JSON response
+
+            // Test on response status for errors
+            if ($status === 403 || $status === 404) {
+                $message = $data->message ?? __('vocab.not_authorized');
+                return redirect()->route('error', ['message' => $message]);
+            }
+        }
+
+        $params = $this->prepareFilterParams($request, $response);
+        $params['classeId'] = __('vocab.class') . ' ' . $classe->classeName();
+
+        return view('students.cards', [
             'classe' => $classe,
             'students' => $response,
             'params' => $params
@@ -61,7 +176,7 @@ class StudentController extends Controller
     public function prepareFilterParams(Request $request, $response)
     {
 
-        $params=[];
+        $params = [];
         if (!$response || count($response) == 0)
             return $params;
 
@@ -69,10 +184,10 @@ class StudentController extends Controller
             $params['orderBy'] = 'مع الترتيب';
         }
         if ($request->filled('classeId')) {
-            $params['classeId'] = 'القسم ' . $response->first()->classe->name;
+            $params['classeId'] = __('vocab.class') . ' ' . $response->first()->classe->classeName();
         }
         if ($request->filled('userId')) {
-            $params['userId'] = 'التلميد ' . $response->first()->user->firstName;
+            $params['userId'] = __('vocab.student') . $response->first()->user->fullName();
         }
         if ($request->filled('minPlage')) {
             $params['minPlage'] = 'اكثر من ' . $request->minPlage . ' ساعة غياب';
@@ -88,7 +203,7 @@ class StudentController extends Controller
             $params['maxAbsences'] = 'اقل من ' . $request->maxAbsences . ' حالة غياب';
         }
         if ($request->filled('search')) {
-            $params['search'] = 'بحث ' . $request->search;
+            $params['search'] = __('vocab.search') . ' ' . $request->search;
         }
 
         return $params;
@@ -102,11 +217,9 @@ class StudentController extends Controller
     }
 
     // Store student Data
-    public function store(Request $request)
+    public function store(Request $request, V1StudentController $controller)
     {
 
-
-        $controller = new V1StudentController();
         $response = $controller->store($request);
         // Get the HTTP status code from the response
         $status_code = $response->getStatusCode();
@@ -116,7 +229,7 @@ class StudentController extends Controller
             $message = isset($data['message']) ? $data['message'] : 'Student created!';
             return redirect()->route('students.manage', ['classe' => $request->get('classeId')])->with('message', $message);
         } else {
-            $message = isset($data['message']) ? $data['message'] : 'لم تتم العملية بنجاح، المرجو اعادة المحاولة';
+            $message = isset($data['message']) ? $data['message'] : __('vocab.action_failure') . ' ' . __('vocab.try_again');
             return back()->withErrors(['message' => $message]);;
         }
     }
@@ -125,17 +238,28 @@ class StudentController extends Controller
     public function edit(Student $student)
     {
         if (!Auth::user()->hasRole('admin') && Auth::user()->id !== $student->classe->userId) {
-            return redirect()->route('home.route')->with('message',  'غير مسموح');
+            return redirect()->route('home')->with('message',  __('vocab.not_authorized'));
         }
         $classes = Classe::where('userId', $student->classe->userId)->get();
         return view('students.edit', ['student' => $student, 'classes' => $classes]);
     }
 
+    public function card(Student $student)
+    {
+        if (
+            !Auth::user()->hasRole('admin')
+            && Auth::user()->id !== $student->classe->userId
+            && Auth::user()->id !== $student->userId
+        ) {
+            return redirect()->route('home')->with('message',  __('vocab.not_authorized'));
+        }
+        return view('students.card', ['student' => $student]);
+    }
     // Update student Data
     public function update(Request $request, Student $student)
     {
         if (!Auth::user()->hasRole('admin') && Auth::user()->id !== $student->classe->userId) {
-            return redirect()->route('home.route')->with('message',  'غير مسموح');
+            return redirect()->route('home')->with('message',  __('vocab.not_authorized'));
         }
         $controller = new V1StudentController();
         $response = $controller->update($request, $student);
@@ -149,7 +273,7 @@ class StudentController extends Controller
             $message = isset($data['message']) ? $data['message'] : 'Student updated successfully';
             //get token and save
         } else {
-            $message = isset($data['message']) ? $data['message'] : 'لم يتم التعديل بنجاح';
+            $message = isset($data['message']) ? $data['message'] : __('vocab.update_failure') . ' ' . __('vocab.try_again');
         }
         return redirect()->route('students.edit', ['student' => $student])->with('message', $message);
     }
@@ -161,7 +285,7 @@ class StudentController extends Controller
             !Auth::user()->hasRole('admin') &&
             !(Auth::user()->id === $student->classe->userId)
         ) {
-            return redirect()->route('home.route')->with('message',  'غير مسموح');
+            return redirect()->route('home')->with('message',  __('vocab.not_authorized'));
         }
 
         $controller = new V1StudentController();
@@ -172,9 +296,9 @@ class StudentController extends Controller
 
 
         if ($status_code == 200) {
-            $message = isset($data['message']) ? $data['message'] : 'تم الحدف بنجاح';
+            $message = isset($data['message']) ? $data['message'] : __('vocab.delete_success');
         } else {
-            $message = isset($data['message']) ? $data['message'] : 'الحدف لم يتم بنجاح';
+            $message = isset($data['message']) ? $data['message'] : __('vocab.delete_failed');
         }
         return redirect()->route('students.manage', ['classe' => $student->classeId])->with('message', $message);
     }

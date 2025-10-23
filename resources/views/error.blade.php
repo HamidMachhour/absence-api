@@ -1,21 +1,45 @@
-<x-layout>
+@extends('layouts.master')
 
+@section('title')
+{{__('vocab.error')}}
+@endsection
 
-    {{-- @include('partials._search') --}}
+@section('css')
+@endsection
 
+@section('main-page')
+<a href="javascript:history.back()"> {{ __('vocab.go_back') }}</a>
+@endsection
 
-    <x-card>
-        <div class="flex gap-2 flex-wrap items-center">
-        @if (isset($message))
-            <p>
-                {{ $message }}
-            </p>
-        @else
-            <p>غير متوفر</p>
-        @endif
-        <div class="bg-gray-200 text-orange-600 rounded p-2 hover:bg-green-700">
-            <a href="javascript:history.back()"> رجوع </a>
+@section('page')
+{{__('vocab.error')}}
+@endsection
+
+@section('content')
+    <div class="max-w-3xl mx-auto">
+        <div class="mb-6">
+            <img src="{{ asset('assets/images/app_logo.png') }}" alt="App Logo" class="mx-auto h-48 w-48">
         </div>
+    </div>
+<div class="d-flex justify-content-center align-items-center">
+    <x-card :title="__('vocab.error')" >
+        @if (isset($message))
+        <div class="">
+            {{ $message }}
+        </div>
+        @else
+        <div class=" text-danger">{{__('vocab.empty')}}</div>
+        @endif
+
+        <div class="btn-group mt-2">
+            <a href="javascript:history.back()" class="btn btn-block btn-outline-warning">
+                {{__('vocab.go_back')}}
+            </a>
         </div>
     </x-card>
-</x-layout>
+</div>
+
+@endsection
+
+@section('scripts')
+@endsection

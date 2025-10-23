@@ -1,99 +1,133 @@
-<x-layout>
+@extends('layouts.master')
 
-    <x-card class="p-10 max-w-lg mx-auto mt-24">
-        <header class="text-center">
-            <h2 class="text-2xl font-bold uppercase mb-1">Edit Address</h2>
-        </header>
+@section('title')
+{{__('vocab.edit_address')}}
+@endsection
 
-        <form method="POST" action="{{ route('addresses.update', ['address' => $address->id]) }}"
-            enctype="multipart/form-data">
-            @csrf
-            @method('PUT')
+@section('css')
+@endsection
 
-            <div class="mb-6">
-                <label for="strAddress" class="inline-block text-lg mb-2">اسم الشارع، الحي </label>
-                <input type="text" class="border border-gray-200 rounded p-2 w-full" name="strAddress"
-                    placeholder="اسم الشارع، الحي  " value="{{ $address->strAddress }}" />
+@section('main-page')
+    <a href="{{ route('addresses.index') }}">{{__('vocab.my_addresses')}}</a>
+@endsection
+@section('page')
+{{__('vocab.edit_address')}}
+@endsection
 
-                @error('strAddress')
-                    <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                @enderror
-            </div>
-            <div class="mb-6">
-                <label for="city" class="inline-block text-lg mb-2">المدينة</label>
-                <input type="text" class="border border-gray-200 rounded p-2 w-full" name="city"
-                    placeholder="city" value="{{ $address->city }}" />
+@section('content')
+    <section class="content">
+        <div class="container-fluid">
+            <div class="row">
+                <!-- left column -->
+                <div class="col-md-12">
+                    <div class="card card-primary">
+                        <div class="card-header">
+                            <div class="card-title h2"> {{__('vocab.edit_address')}}</div>
+                        </div>
+                        <div class="card-body">
+                            <form method="POST" action="{{ route('addresses.update', ['address' => $address->id]) }}"
+                                enctype="multipart/form-data">
+                                @csrf
+                                @method('PUT')
 
-                @error('city')
-                    <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                @enderror
-            </div>
-            <div class="mb-6">
-                <label for="zipCode" class="inline-block text-lg mb-2">Address zipcode</label>
-                <input type="number" step="1" class="border border-gray-200 rounded p-2 w-full"
-                    name="zipCode" placeholder="zip code" value="{{ $address->zipCode }}" />
+                                <div class="form-group ">
+                                    <label for="strAddress" >{{__('vocab.street')}} </label>
+                                    <input type="text" class="form-control "
+                                        name="strAddress" placeholder="{{__('vocab.street')}}  "
+                                        value="{{ $address->strAddress }}" />
 
-                @error('zipCode')
-                    <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                @enderror
-            </div>
+                                    @error('strAddress')
+                                        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                                    @enderror
+                                </div>
+                                <div class="form-group ">
+                                    <label for="city" >{{__('vocab.city')}}</label>
+                                    <input type="text" class="form-control " name="city"
+                                        placeholder="city" value="{{ $address->city }}" />
 
-            <div class="mb-6">
-                <label for="country" class="inline-block text-lg mb-2">البلد</label>
-                <input type="text" class="border border-gray-200 rounded p-2 w-full" name="country"
-                    value="{{ $address->country }}" />
-                @error('country')
-                    <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                @enderror
-            </div>
+                                    @error('city')
+                                        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                                    @enderror
+                                </div>
+                                <div class="form-group ">
+                                    <label for="zipCode" >{{__('vocab.zip_code')}}</label>
+                                    <input type="number" step="1" class="form-control "
+                                        name="zipCode" value="{{ $address->zipCode }}" />
 
-            <div class="mb-6">
-                <label for="location" class="inline-block text-lg mb-2">الاجداثيات على الخريطة</label>
-                <input type="text" class="border border-gray-200 rounded p-2 w-full" name="location"
-                    value="{{ $address->location }}" />
-                @error('location')
-                    <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                @enderror
-            </div>
+                                    @error('zipCode')
+                                        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                                    @enderror
+                                </div>
 
-            <div class="mb-6">
-                <label for="phones" class="inline-block text-lg mb-2">
-                    ارقام الهواتف (Comma Separated)
-                </label>
-                <input type="text" class="border border-gray-200 rounded p-2 w-full" name="phones"
-                    value="{{ $address->phones }}" />
+                                <div class="form-group ">
+                                    <label for="country" >{{__('vocab.country')}}</label>
+                                    <input type="text" class="form-control " name="country"
+                                        value="{{ $address->country }}" />
+                                    @error('country')
+                                        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                                    @enderror
+                                </div>
 
-                @error('phones')
-                    <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                @enderror
-            </div>
+                                <div class="form-group ">
+                                    <label for="location" >{{__('vocab.xycoord')}}</label>
+                                    <input type="text" class="form-control " name="location"
+                                        value="{{ $address->location }}" />
+                                    @error('location')
+                                        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                                    @enderror
+                                </div>
 
-            <div class="mb-6">
-                <label for="email" class="inline-block text-lg mb-2">
-                    البريد الالكتروني
-                </label>
-                <input type="email" class="border border-gray-200 rounded p-2 w-full" name="email" rows="10"
-                    value="{{ $address->email }}" />
+                                <div class="form-group ">
+                                    <label for="phones" >
+                                        {{__('vocab.phone_numbers')}}
+                                    </label>
+                                    <input type="text" class="form-control " name="phones"
+                                        value="{{ $address->phones }}" />
 
-                @error('email')
-                    <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                @enderror
-            </div>
+                                    @error('phones')
+                                        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                                    @enderror
+                                </div>
 
-            <div class="flex flex-cols gap-2">
+                                <div class="form-group ">
+                                    <label for="email" >
+                                        {{__('vocab.email')}}
+                                    </label>
+                                    <input type="email" class="form-control " name="email"
+                                        rows="10" value="{{ $address->email }}" />
 
-                <button type="submit" class="block bg-orange-600 text-white rounded py-2 px-4 hover:bg-green-700">
-                    <i class="fa-solid fa-save"></i>
-                    حفظ
-                </button>
-                <div class="flex justify-center bg-gray-400 text-white rounded p-3 hover:bg-green-700 text-xs p-1">
-                    <a href="javascript:history.back()" class=" block ">
-                        <i class="fa-solid fa-circle-arrow-left"></i>
-                        رجوع
-                    </a>
+                                    @error('email')
+                                        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                                    @enderror
+                                </div>
+
+                                <div class="card-footer ">
+                                    <button type="submit" class="btn  btn-outline-success">
+                                        <i class="fa-solid fa-save"></i>
+                                        {{__('vocab.save')}}
+                                    </button>
+                                    <a href="javascript:history.back()" class=" btn btn-outline-primary">
+                                        <i class="fa-solid fa-circle-arrow-left"></i>
+                                        {{__('vocab.go_back')}}
+                                    </a>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
                 </div>
+            </div>
+            <!--/.col (left) -->
+            <!-- right column -->
+            <div class="col-md-6">
 
             </div>
-        </form>
-    </x-card>
-</x-layout>
+            <!--/.col (right) -->
+        </div>
+
+        </div>
+
+        <x-flash-message />
+    @endsection
+
+    @section('scripts')
+    @endsection

@@ -15,7 +15,7 @@ class CreateClasseImageTable extends Migration
     {
         Schema::create('ClasseImage', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->text('classeId');
+            $table->string('classeId',255);
             $table->text('uri');
             $table->timestamp('deleted_at')->nullable();
             $table->timestamps();

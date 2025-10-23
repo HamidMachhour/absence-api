@@ -15,8 +15,8 @@ class CreateUserImageTable extends Migration
     {
         Schema::create('UserImage', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->text('userId');
-            $table->text('uri');
+            $table->string('userId',255);
+            $table->string('uri');
             $table->timestamp('deleted_at')->nullable();
             $table->timestamps();
         });

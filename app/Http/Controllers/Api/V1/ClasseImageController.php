@@ -50,20 +50,20 @@ class ClasseImageController extends Controller
                     ->paginate($page_size);
             }
         } catch (Exception $e) {
-            return response()->json(['message' => 'غير متوفر. ' . $e->getMessage()], 404);
+            return response()->json(['message' => __('vocab.empty') . $e->getMessage()], 404);
         }
     }
 
     public function setDefault(Classe $classe, ClasseImage $image)
     {
         if (Auth::user()->id !== $classe->userId && !Auth::user()->hasRole('admin')) {
-            return response()->json(['message' => 'تم الرفض، لا تمتلك التفويض الكافي للقيام بالعملية'], 403);
+            return response()->json(['message' => __('vocab.not_authorized')], 403);
         }
         try {
             $classe->update(['imageId' => $image->id]);
             return response()->json(['message' => 'Update successfully', 'classe' => $classe], 200);
         } catch (Exception $e) {
-            return response()->json(['message' => 'لم يتم التعديل بنجاح، المرجو اعادة المحاولة' . $e->getMessage()], 404);
+            return response()->json(['message' => __('vocab.update_failure').' '.__('vocab.try_again') . $e->getMessage()], 404);
         }
     }
     /**
@@ -87,19 +87,19 @@ class ClasseImageController extends Controller
                 $classe = Classe::findOrFail($classeId);
 
                 if (Auth::user()->id !== $classe->userId && !Auth::user()->hasRole('admin')) {
-                    return response()->json(['message' => 'تم الرفض، لا تمتلك التفويض الكافي للقيام بالعملية'], 403);
+                    return response()->json(['message' => __('vocab.not_authorized')], 403);
                 }
                 // Create a new ClasseImage object and assign the validated data
                 $validatedData['classeId'] = $classe->id;
                 $classeImage = ClasseImage::create($validatedData);
                 if (!$classe->imageId)
                     $classe->update(['imageId' => $classeImage->id]);
-                return response()->json(['message' => 'تمت الاضافة بنجاح', 'classeImage' => $classeImage], 201);
+                return response()->json(['message' => __('vocab.action_success'), 'classeImage' => $classeImage], 201);
             }
 
-            return response()->json(['message' => 'العملية لم تتم بنجاح، المرجو اعادة المحاولة' . $exception->getMessage()], 404);
+            return response()->json(['message' => __('vocab.task_failed').' '.__('vocab.try_again') . $exception->getMessage()], 404);
         } catch (Exception $exception) {
-            return response()->json(['message' => 'العملية لم تتم بنجاح، المرجو اعادة المحاولة' . $exception->getMessage()], 404);
+            return response()->json(['message' => __('vocab.task_failed').' '.__('vocab.try_again') . $exception->getMessage()], 404);
         }
     }
 
@@ -116,19 +116,17 @@ class ClasseImageController extends Controller
         try {
             $id = $validatedData['id'];
             unset($validatedData['id']);
-            $classeImage = ClasseImage::whereHas(
-                'classe',
-                function ($classe) {
-                    $classe->where('userId', auth()->user()->id);
-                }
-            )->findOrFail($id);
+            $classeImage = ClasseImage::findOrFail($id);
+            if (Auth::user()->id !== $classeImage->classe->userId && !Auth::user()->hasRole('admin')) {
+                return response()->json(['message' => __('vocab.not_authorized')], 403);
+            }
             // Save the classeImage
             $classeImage->update($validatedData);
             // Retrieve the updated classeImage from the database
             $updatedClasseImage = ClasseImage::with('classe')->findOrFail($id);
-            return response()->json(['message' => 'تم التعديل بنجاح', 'classeImage' => $updatedClasseImage], 201);
+            return response()->json(['message' => __('vocab.update_success'), 'classeImage' => $updatedClasseImage], 201);
         } catch (Exception $exception) {
-            return response()->json(['message' => 'لم يتم التعديل بنجاح، المرجو اعادة المحاولة' . $exception->getMessage()], 404);
+            return response()->json(['message' => __('vocab.update_failure').' '.__('vocab.try_again') . $exception->getMessage()], 404);
         }
     }
 
@@ -139,12 +137,15 @@ class ClasseImageController extends Controller
     public function destroy(ClasseImage $image)
     {
         try {
+            if (Auth::user()->id !== $image->classe->userId && !Auth::user()->hasRole('admin')) {
+                return response()->json(['message' => __('vocab.not_authorized')], 403);
+            }
             // Soft delete the classeImage
             $image->delete();
             // Return a response
             return response()->json(['message' => 'Deleted successfully'], 201);
         } catch (Exception $e) {
-            return response()->json(['message' => 'غير متوفر. ' . $e->getMessage()], 404);
+            return response()->json(['message' => __('vocab.empty') . $e->getMessage()], 404);
         }
     }
 

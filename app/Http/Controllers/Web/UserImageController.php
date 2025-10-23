@@ -39,7 +39,7 @@ class UserImageController extends Controller
     public function setDefault(User $user, UserImage $image)
     {
         if (Auth::user()->id !== $user->id) {
-            return redirect()->route('home.route')->with('message',  'غير مسموح');
+            return redirect()->route('home')->with('message',  __('vocab.not_authorized'));
         }
         $controller = new V1UserImageController();
         $response = $controller->setDefault($user,$image);
@@ -53,7 +53,7 @@ class UserImageController extends Controller
             $message = isset($data['message']) ? $data['message'] : 'Image set as default successfully';
             //get token and save
         } else {
-            $message = isset($data['message']) ? $data['message'] : 'Action failed.';
+            $message = isset($data['message']) ? $data['message'] : __('vocab.action_failure');
         }
         return redirect()->route('userImages.show',['user'=>$user])->with('message', $message);
     }
@@ -64,7 +64,7 @@ class UserImageController extends Controller
      */
     public function create(User $user) {
         if (Auth::user()->id !== $user->id) {
-            return redirect()->route('home.route')->with('message', 'غير مسموح');
+            return redirect()->route('home')->with('message', __('vocab.not_authorized'));
         }
 
         return view('userImages.create',['user' =>$user]);
@@ -88,7 +88,7 @@ class UserImageController extends Controller
             $message = isset($data['message']) ? $data['message'] : 'User Image added!';
             return redirect()->route('userImages.show',['user'=>$request->get('userId')])->with('message', $message);
         }else{
-            $message = isset($data['message']) ? $data['message'] : 'لم تتم العملية بنجاح، المرجو اعادة المحاولة';
+            $message = isset($data['message']) ? $data['message'] : __('vocab.action_failure').' '.__('vocab.try_again');
             return back()->withErrors(['message' => $message]);;
         }
     }
@@ -126,7 +126,7 @@ class UserImageController extends Controller
     public function destroy(UserImage $image)
     {
         if (Auth::user()->id !== $image->userId) {
-            return redirect()->route('home.route')->with('message', 'غير مسموح');
+            return redirect()->route('home')->with('message', __('vocab.not_authorized'));
         }
         $controller = new V1UserImageController();
         $response = $controller->destroy($image);
@@ -140,7 +140,7 @@ class UserImageController extends Controller
             $message = isset($data['message']) ? $data['message'] : 'Image deleted successfully';
             //get token and save
         } else {
-            $message = isset($data['message']) ? $data['message'] : 'الحدف لم تتم بنجاح';
+            $message = isset($data['message']) ? $data['message'] : __('vocab.delete_failed');
         }
         return redirect()->route('userImages.show',['user'=>$image->userId])->with('message', $message);
 

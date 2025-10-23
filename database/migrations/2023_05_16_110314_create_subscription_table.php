@@ -15,8 +15,8 @@ class CreateSubscriptionTable extends Migration
     {
         Schema::create('Subscription', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->text('userId');
-            $table->text('planId');
+            $table->string('userId',255);
+            $table->string('planId',255);
             $table->timestamp('expire_at');
             $table->string('status'); //(e.g., active, expired, canceled)
             $table->timestamp('deleted_at')->nullable();

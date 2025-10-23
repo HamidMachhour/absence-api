@@ -15,8 +15,8 @@ class CreateAbsenceStudentTable extends Migration
     {
         Schema::create('AbsenceStudent', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->text('studentId');
-            $table->text('absenceId');
+            $table->string('studentId',255);
+            $table->string('absenceId',255);
             $table->float('plage');
             $table->text('justification')->nullable();
             $table->text('deleted_at')->nullable();

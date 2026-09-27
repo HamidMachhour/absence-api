@@ -58,7 +58,13 @@ class AttendanceController extends Controller
             'absent_student_ids' => ['required', 'array'],
             'absent_student_ids.*' => ['string'],
             'timestamp' => ['nullable', 'date'],
+            'finalize' => ['nullable', 'boolean'],
         ]);
+
+        // Mobile submission is treated as final by default.
+        $finalize = array_key_exists('finalize', $validatedData)
+            ? (bool) $validatedData['finalize']
+            : true;
 
         $classStudentIds = Student::where('classeId', $seance->classeId)->pluck('id')->all();
         $classStudentIdMap = array_fill_keys($classStudentIds, true);
@@ -95,9 +101,16 @@ class AttendanceController extends Controller
             });
 
             $attendance->refresh();
+            $absenceCreated = false;
 
-            if ($this->shouldConvertToAbsenceNow($seance, $validatedData['timestamp'] ?? null)) {
-                $this->attendanceToAbsence($attendance);
+            if ($finalize || $this->shouldConvertToAbsenceNow($seance, $validatedData['timestamp'] ?? null)) {
+                $conversionResponse = $this->attendanceToAbsence($attendance);
+
+                if ($conversionResponse->getStatusCode() !== 200) {
+                    return $conversionResponse;
+                }
+
+                $absenceCreated = true;
             }
 
             $this->publishAttendanceUpdatedEvent($seance, $absentStudentIds);
@@ -107,6 +120,7 @@ class AttendanceController extends Controller
                 'seance_id' => $seance->id,
                 'attendance_id' => $attendance->id,
                 'absent_student_ids' => $absentStudentIds,
+                'absence_created' => $absenceCreated,
             ], 200);
         } catch (Exception $exception) {
             Log::error('Failed to submit seance attendance: ' . $exception->getMessage());

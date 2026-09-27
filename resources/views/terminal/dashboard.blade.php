@@ -44,8 +44,12 @@
     <!-- QR Scanner Dialog -->
     <div id="dialog" class="mx-4 p-4 bg-white rounded-lg shadow-md">
         <div class="flex flex-col items-center space-y-3">
-            <!-- Video Preview -->
-            <div id="qr-reader" class="w-full max-w-sm"></div>
+            @if(!($terminalReadOnly ?? false))
+                <!-- Video Preview -->
+                <div id="qr-reader" class="w-full max-w-sm"></div>
+            @else
+                <p class="text-muted">{{ __('vocab.no_attendance_data') }} (read-only finalized absence view)</p>
+            @endif
 
             <!-- Flash Message -->
             @if(session('message'))
@@ -66,6 +70,16 @@
 
 @section('scripts')
 
+@php
+    $terminalReadOnlyFlag = $terminalReadOnly ?? false;
+    $popStudentBaseUrlValue = $terminalReadOnlyFlag
+        ? null
+        : route('attendances.popStudent', ['attendance' => $attendance, 'scannedData' => 'REPLACE_ME']);
+    $refreshAttendanceUrlValue = $terminalReadOnlyFlag
+        ? null
+        : route('attendances.students.list', ['attendance' => $attendance]);
+@endphp
+
 <script src="{{ asset('assets/js/html5-qrcode.min.js') }}"></script>
 
 <script src="{{ asset('assets/js/qrcode.min.js') }}"></script>
@@ -73,6 +87,11 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
+
+    const terminalReadOnly = {!! json_encode($terminalReadOnlyFlag) !!};
+    const popStudentBaseUrl = {!! json_encode($popStudentBaseUrlValue) !!};
+    const refreshAttendanceUrl = {!! json_encode($refreshAttendanceUrlValue) !!};
+    const scannerLoadErrorText = {!! json_encode(__('vocab.qr_scanner_load_error')) !!};
 
         // Get references to the audio elements once the DOM is ready
         const successAudio = document.getElementById('successSound');
@@ -94,12 +113,11 @@
 
         // --- QR Code Scanner Logic (using Html5QrcodeScanner) ---
         const qrCodeSuccessCallback = async (decodedText, decodedResult) => {
+            if (terminalReadOnly) return;
             if (isProcessing) return;
             isProcessing = true;
 
-            const url =
-                `{{ route('attendances.popStudent', ['attendance' => $attendance, 'scannedData' => 'REPLACE_ME']) }}`
-                .replace('REPLACE_ME', encodeURIComponent(decodedText));
+            const url = popStudentBaseUrl.replace('REPLACE_ME', encodeURIComponent(decodedText));
             try {
                 const response = await fetch(url, {
                     method: 'GET',
@@ -139,7 +157,9 @@
 
         async function refreshAttendanceList() {
             try {
-                const response = await fetch("{{ route('attendances.students.list', ['attendance' => $attendance]) }}", { // prettier-ignore
+                if (!refreshAttendanceUrl) return;
+
+                const response = await fetch(refreshAttendanceUrl, {
                     method: 'GET',
                     headers: {
                         'X-Requested-With': 'XMLHttpRequest'
@@ -214,7 +234,7 @@
         }
 
         // Check if the library is loaded
-        if (typeof Html5QrcodeScanner !== 'undefined') {
+        if (!terminalReadOnly && typeof Html5QrcodeScanner !== 'undefined') {
             const html5QrcodeScanner = new Html5QrcodeScanner(
                 "qr-reader", // ID of the container element
                 {
@@ -241,11 +261,13 @@
                     startAutoRefreshCheck();
                 }
             });
-        } else {
+        } else if (!terminalReadOnly) {
             console.error('html5-qrcode library failed to load.');
             const errorContainer = document.getElementById('scanner-error'); // Assuming you might add this back
-            errorContainer.textContent = __('vocab.qr_scanner_load_error');
-            errorContainer.classList.remove('hidden'); // Assuming you might add this back
+            if (errorContainer) {
+                errorContainer.textContent = scannerLoadErrorText;
+                errorContainer.classList.remove('hidden'); // Assuming you might add this back
+            }
         }
 
         // --- Share Modal QR Code Logic ---
@@ -256,32 +278,34 @@
 
         let qrCodeInstance = null;
 
-        shareButton.addEventListener('click', function() {
-            qrModal.classList.remove('hidden');
+        if (shareButton && qrModal && closeQrModal && qrCodeDiv) {
+            shareButton.addEventListener('click', function() {
+                qrModal.classList.remove('hidden');
 
-            qrCodeDiv.innerHTML = "";
+                qrCodeDiv.innerHTML = "";
 
-            // Generate QR code for current URL
-            qrCodeInstance = new QRCode(qrCodeDiv, {
-                text: window.location.href,
-                width: 300, // increase width
-                height: 300, // increase height
-                colorDark: "#000000",
-                colorLight: "#ffffff",
-                correctLevel: QRCode.CorrectLevel.H
+                // Generate QR code for current URL
+                qrCodeInstance = new QRCode(qrCodeDiv, {
+                    text: window.location.href,
+                    width: 300, // increase width
+                    height: 300, // increase height
+                    colorDark: "#000000",
+                    colorLight: "#ffffff",
+                    correctLevel: QRCode.CorrectLevel.H
+                });
             });
-        });
 
-        closeQrModal.addEventListener('click', function() {
-            qrModal.classList.add('hidden');
-        });
-
-        // Close modal when clicking outside content
-        qrModal.addEventListener('click', function(e) {
-            if (e.target === qrModal) {
+            closeQrModal.addEventListener('click', function() {
                 qrModal.classList.add('hidden');
-            }
-        });
+            });
+
+            // Close modal when clicking outside content
+            qrModal.addEventListener('click', function(e) {
+                if (e.target === qrModal) {
+                    qrModal.classList.add('hidden');
+                }
+            });
+        }
     });
 </script>
 

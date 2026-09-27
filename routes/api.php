@@ -112,8 +112,15 @@ Route::prefix('v1/seances')
     ->namespace('App\Http\Controllers\Api\V1')
     ->middleware('auth:sanctum')
     ->group(function () {
-        Route::get('/{seance}/roster', [SeanceController::class, 'roster']);
+        Route::get('/{seanceId}/roster', [SeanceController::class, 'roster']);
         Route::post('/{seance}/attendance', [AttendanceController::class, 'submitForSeance']);
+    });
+
+Route::prefix('v1/teachers/me')
+    ->namespace('App\Http\Controllers\Api\V1')
+    ->middleware('auth:sanctum')
+    ->group(function () {
+        Route::get('/seances', [SeanceController::class, 'mySeances']);
     });
 
 

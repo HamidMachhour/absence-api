@@ -15,6 +15,7 @@ use App\Http\Controllers\Controller;
 
 use DateInterval;
 use DateTime;
+use Carbon\Carbon;
 
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\File;
@@ -22,6 +23,19 @@ use Illuminate\Support\Facades\Response;
 
 class SeanceController extends Controller
 {
+    private function formatSeanceRange($de, $a): array
+    {
+        $from = Carbon::parse((string) $de);
+        $to = Carbon::parse((string) $a);
+
+        return [
+            'from' => $from->format('H:i'),
+            'to' => $to->format('H:i'),
+            'label' => $from->format('H:i') . ' - ' . $to->format('H:i'),
+            'label_short' => $from->format('G') . ' - ' . $to->format('G'),
+        ];
+    }
+
     /**
      * Display a listing of the resource.
      *
@@ -395,17 +409,21 @@ class SeanceController extends Controller
         }
     }
 
-    public function roster(Seance $seance)
+    public function roster(string $seanceId)
     {
         if (!Auth::check()) {
             return response()->json(['message' => __('vocab.not_authorized')], 403);
         }
 
+        $seance = Seance::with(['classe', 'subject'])->find($seanceId);
+
+        if (!$seance) {
+            return response()->json(['message' => __('vocab.no_data')], 404);
+        }
+
         if (Auth::id() !== $seance->teacherId) {
             return response()->json(['message' => __('vocab.not_authorized')], 403);
         }
-
-        $seance->loadMissing(['classe', 'subject']);
 
         $students = Student::where('classeId', $seance->classeId)
             ->with(['user.userImage'])
@@ -429,6 +447,41 @@ class SeanceController extends Controller
             'subject' => $seance->subject?->nameEn ?? $seance->subject?->name,
             'salle' => $seance->salle,
             'students' => $students,
+        ], 200);
+    }
+
+    public function mySeances(Request $request)
+    {
+        if (!Auth::check()) {
+            return response()->json(['message' => __('vocab.not_authorized')], 403);
+        }
+
+        $seances = Seance::where('teacherId', Auth::id())
+            ->with(['subject', 'classe', 'day'])
+            ->orderBy('dayId')
+            ->orderBy('de')
+            ->get()
+            ->map(function (Seance $seance) {
+                $range = $this->formatSeanceRange($seance->de, $seance->a);
+
+                return [
+                    'id' => $seance->id,
+                    'day_id' => $seance->dayId,
+                    'day_name' => $seance->day?->nameEn ?? $seance->day?->name,
+                    'salle' => $seance->salle,
+                    'subject' => $seance->subject?->nameEn ?? $seance->subject?->name,
+                    'classe_name' => $seance->classe?->nameEn ?? $seance->classe?->name,
+                    'de' => $range['from'],
+                    'a' => $range['to'],
+                    'time_range' => $range['label'],
+                    'time_range_short' => $range['label_short'],
+                ];
+            })
+            ->values();
+
+        return response()->json([
+            'teacher_id' => Auth::id(),
+            'seances' => $seances,
         ], 200);
     }
 }

@@ -16,9 +16,6 @@ class _DaySeeder extends Seeder
      */
     public function run()
     {
-        // Clear the users table
-        // DB::table('_Day')->truncate();
-
         $days = [
             ['name' => 'الأحد', 'nameFr' => 'Dimanche', 'nameEn' => 'Sunday', 'nameZ' => 'ⴰⵙⵙⴰⵎⴰⵙ'],
             ['name' => 'الإثنين', 'nameFr' => 'Lundi', 'nameEn' => 'Monday', 'nameZ' => 'ⴰⵙⵙⵉⵏⴰⵙ'],
@@ -30,7 +27,14 @@ class _DaySeeder extends Seeder
         ];
 
         foreach ($days as $day) {
-            _Day::create($day);
+            $dayRecord = _Day::withTrashed()->updateOrCreate(
+                ['nameEn' => $day['nameEn']],
+                $day
+            );
+
+            if ($dayRecord->trashed()) {
+                $dayRecord->restore();
+            }
         }
     }
 }

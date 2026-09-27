@@ -4,6 +4,8 @@ namespace Tests\Feature\Api;
 
 use App\Models\Attendance;
 use App\Models\AttendanceStudent;
+use App\Models\Absence;
+use App\Models\AbsenceStudent;
 use App\Models\Classe;
 use App\Models\Role;
 use App\Models\Seance;
@@ -124,6 +126,35 @@ class MobileAttendanceTest extends TestCase
             ->assertJsonCount(2, 'students');
     }
 
+    public function test_authorized_teacher_can_fetch_own_seances_with_formatted_ranges(): void
+    {
+        $context = $this->createRosterContext();
+        Sanctum::actingAs($context['teacher']);
+
+        Seance::create([
+            'teacherId' => $context['teacher']->id,
+            'classeId' => $context['seance']->classeId,
+            'subjectId' => $context['seance']->subjectId,
+            'dayId' => $context['seance']->dayId,
+            'salle' => '205',
+            'de' => '13:00:00',
+            'a' => '15:00:00',
+        ]);
+
+        $response = $this->getJson('/api/v1/teachers/me/seances');
+
+        $response
+            ->assertOk()
+            ->assertJsonPath('teacher_id', $context['teacher']->id)
+            ->assertJsonCount(2, 'seances');
+
+        $ranges = collect($response->json('seances'))->pluck('time_range')->all();
+        $shortRanges = collect($response->json('seances'))->pluck('time_range_short')->all();
+
+        $this->assertContains('13:00 - 15:00', $ranges);
+        $this->assertContains('13 - 15', $shortRanges);
+    }
+
     public function test_authorized_teacher_can_submit_absences_batch(): void
     {
         $context = $this->createRosterContext();
@@ -136,15 +167,20 @@ class MobileAttendanceTest extends TestCase
 
         $response = $this->postJson('/api/v1/seances/' . $context['seance']->id . '/attendance', $payload);
 
-        $response->assertOk()->assertJsonPath('seance_id', $context['seance']->id);
+        $response
+            ->assertOk()
+            ->assertJsonPath('seance_id', $context['seance']->id)
+            ->assertJsonPath('absence_created', true);
 
-        $attendance = Attendance::where('seanceId', $context['seance']->id)->first();
-        $this->assertNotNull($attendance);
+        $absence = Absence::where('seanceId', $context['seance']->id)->first();
+        $this->assertNotNull($absence);
 
-        $this->assertDatabaseHas('AttendanceStudent', [
-            'attendanceId' => $attendance->id,
+        $this->assertDatabaseHas('AbsenceStudent', [
+            'absenceId' => $absence->id,
             'studentId' => $context['students'][0]->id,
         ]);
+
+        $this->assertNull(Attendance::where('seanceId', $context['seance']->id)->first());
     }
 
     public function test_unauthenticated_requests_are_rejected_and_unauthorized_teacher_requests_are_forbidden(): void
@@ -163,5 +199,20 @@ class MobileAttendanceTest extends TestCase
         ])->assertForbidden();
 
         $this->assertDatabaseCount('AttendanceStudent', 0);
+    }
+
+    public function test_roster_for_missing_or_foreign_seance_returns_json_error(): void
+    {
+        $context = $this->createRosterContext();
+        $otherTeacher = $this->createTeacher('other-teacher@example.test');
+        Sanctum::actingAs($otherTeacher);
+
+        $this->getJson('/api/v1/seances/' . $context['seance']->id . '/roster')
+            ->assertStatus(403)
+            ->assertJsonStructure(['message']);
+
+        $this->getJson('/api/v1/seances/does-not-exist/roster')
+            ->assertStatus(404)
+            ->assertJsonStructure(['message']);
     }
 }

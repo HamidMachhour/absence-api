@@ -74,6 +74,7 @@
         <div class="flex flex-col items-center space-y-3">
             <!-- Video Preview -->
             <div id="qr-reader" class="w-full max-w-sm"></div>
+            <p id="scanner-error" class="text-danger text-sm font-medium hidden"></p>
 
             <!-- Flash Message -->
             @if(session('message'))
@@ -105,6 +106,16 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
+
+        const scannerError = document.getElementById('scanner-error');
+        const localhostHosts = ['localhost', '127.0.0.1', '::1'];
+        const isLocalhost = localhostHosts.includes(window.location.hostname);
+
+        const setScannerError = (message) => {
+            if (!scannerError) return;
+            scannerError.textContent = message;
+            scannerError.classList.remove('hidden');
+        };
 
         // Get references to the audio elements once the DOM is ready
         const successAudio = document.getElementById('successSound');
@@ -166,9 +177,17 @@
             }
         };
 
+        let cameraErrorReported = false;
         const qrCodeErrorCallback = (errorMessage) => {
             // This callback is called when a QR code is not found or other errors occur.
             // We can often ignore it to allow for continuous scanning.
+            if (cameraErrorReported) return;
+
+            const msg = String(errorMessage || '').toLowerCase();
+            if (msg.includes('permission') || msg.includes('notallowed') || msg.includes('insecure')) {
+                cameraErrorReported = true;
+                setScannerError('Camera access failed. If you are using a LAN URL (http://10.0.0.11:8000), open the page over HTTPS or localhost to allow camera streaming.');
+            }
         };
 
         let isProcessing = false;
@@ -199,6 +218,16 @@
                 console.error('Error refreshing list:', error);
             }
         }
+        if (!window.isSecureContext && !isLocalhost) {
+            setScannerError('Camera is blocked on insecure HTTP origins. Use HTTPS for this host, or open via localhost.');
+            return;
+        }
+
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            setScannerError('This browser does not expose camera APIs in the current context.');
+            return;
+        }
+
         // Check if the library is loaded
         if (typeof Html5QrcodeScanner !== 'undefined') {
             const html5QrcodeScanner = new Html5QrcodeScanner(
@@ -217,9 +246,7 @@
             html5QrcodeScanner.render(qrCodeSuccessCallback, qrCodeErrorCallback);
         } else {
             console.error('html5-qrcode library failed to load.');
-            const errorContainer = document.getElementById('scanner-error'); // Assuming you might add this back
-            errorContainer.textContent = 'QR Scanner library failed to load. Please check your connection and try again.';
-            errorContainer.classList.remove('hidden'); // Assuming you might add this back
+            setScannerError('QR Scanner library failed to load. Please check your connection and try again.');
         }
 
         // --- Share Modal QR Code Logic ---

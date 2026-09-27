@@ -24,7 +24,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  */
 class SubscriptionInvoice extends AbsenceModel
 {
-    use SoftDeletes;
+    
 
 	protected $table = 'SubscriptionInvoice';
 	protected $casts = [

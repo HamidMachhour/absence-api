@@ -32,7 +32,7 @@ class RoleController extends Controller
 
             return $roles;
         } catch (Exception $e) {
-            return response()->json(['message' => __('vocab.empty') . $e->getMessage()], 404);
+            return response()->json(['message' => __('vocab.no_data') . $e->getMessage()], 404);
         }
     }
 
@@ -162,16 +162,7 @@ class RoleController extends Controller
             return response()->json(['message' => __('vocab.not_authorized')], 403);
         }
 
-        // Check if the role is currently in use by any user
-        $isRoleUsed = UserRole::where('roleId', $role->id)->exists();
-
-        if ($isRoleUsed) {
-            return response()->json([
-                'message' => __('vocab.delete_role_failed')
-            ], 409); // 409 Conflict is appropriate for this kind of error
-        }
-
-        // If the role is not used, safely delete it
+        // The 'deleting' event on the Role model will handle cascading soft deletes for UserRole pivot entries.
         $role->delete();
 
         // Return a successful response. 200 OK or 204 No Content are good choices.
@@ -189,10 +180,13 @@ class RoleController extends Controller
 
         try {
             // Find all roles that are currently in use
-            $usedRoleIds = DB::table('UserRole')->pluck('roleId')->unique();
+            $usedRoleIds = DB::table('UserRole')->whereNull('deleted_at')->pluck('roleId')->unique();
 
-            // Delete all roles whose IDs are NOT in the list of used roles
-            Role::whereNotIn('id', $usedRoleIds)->delete();
+            // Fetch the roles to be deleted
+            $rolesToDelete = Role::whereNotIn('id', $usedRoleIds)->get();
+
+            // Call delete on each model instance to ensure model events are fired
+            $rolesToDelete->each->delete();
 
             return response()->json(['message' => __('vocab.delete_success')], 200);
         } catch (\Exception $e) {

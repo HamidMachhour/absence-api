@@ -46,7 +46,7 @@ class EnrollmentController extends Controller
             ]);
         } catch (Exception $e) {
 
-            return view('error', ["message" => __('vocab.empty') . $e->getMessage()]);
+            return view('error', ["message" => __('vocab.no_data') . $e->getMessage()]);
         }
     }
 

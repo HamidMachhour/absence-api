@@ -2,7 +2,7 @@
 
 <div class="card card-primary card-outline collapsed-card m-1" :title="">
 
-    <div class="card-header">
+    <div class="card-header d-flex gap-2  {{ App::getLocale() == 'ar' ? 'flex-row-reverse' : 'flex-row' }}">
         <div class="card-title h3 d-flex gap-2">
             <a href="{{ request()->fullUrlWithQuery(['reportDate' => $misconduct_report->reportDate, 'page' => 1]) }}"
                 class="flex text-blue-600 hover:text-gray-700 justify-center">
@@ -10,7 +10,7 @@
             </a>
             <a href="{{ request()->fullUrlWithQuery(['status' => $misconduct_report->status, 'page' => 1]) }}"
                 class="flex text-blue-600 hover:text-gray-700 justify-center">
-                {{ $misconduct_report->status }}
+                {{ __("vocab.{$misconduct_report->status}")  }}
             </a>
         </div>
         <div class="card-tools">
@@ -24,7 +24,9 @@
         <div class="d-flex flex-column justify-between">
             <x-student-card :student="$misconduct_report->student" />
             <x-seance-card :seance="$misconduct_report->seance" />
+            @if(auth()->user()->hasRole('teacher') || auth()->user()->hasRole('manager') || auth()->user()->hasRole('admin'))
             <x-misconduct-report-actions-card :misconduct_report="$misconduct_report" />
+            @endif
         </div>
 
     </div>

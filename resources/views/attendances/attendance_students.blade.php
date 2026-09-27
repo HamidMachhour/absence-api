@@ -6,6 +6,6 @@
     </div>
     @else
     <div> 
-        <p class="flex justify-center">{{__('vocab.empty')}}</p>
+        <p class="flex justify-center">{{__('vocab.no_data')}}</p>
     </div>
     @endunless

@@ -73,27 +73,12 @@
     <div id="dialog" class="mx-4 p-4 bg-white rounded-lg shadow-md">
         <div class="flex flex-col items-center space-y-3">
             <!-- Video Preview -->
-            <video id="preview" class="w-1/12 max-w-[120px] rounded border shadow"></video>
+            <div id="qr-reader" class="w-full max-w-sm"></div>
 
             <!-- Flash Message -->
             @if(session('message'))
             <p class="text-info font-medium">{{ session('message') }}</p>
             @endif
-
-            <!-- Scan Controls -->
-            <div class="flex space-x-3">
-                <!-- Start Scan -->
-                <button id="scanButton" class="btn btn-app bg-info">
-                    <i class="fas fa-qrcode"></i>
-                    {{ __('vocab.confirm') }} {{ __('vocab.present') }}
-                </button>
-
-                <!-- Stop Scan -->
-                <button id="stopScanButton" class="btn btn-app bg-danger" style="display:none;">
-                    <i class="fas fa-stop"></i>
-                    {{ __('vocab.stop') }}
-                </button>
-            </div>
         </div>
     </div>
 </div>
@@ -101,137 +86,176 @@
 <div id="attendance-list-container">
     @include('attendances.attendance_students',['attendance'=>$attendance])
 </div>
+<!-- Audio Elements for Feedback -->
+<audio id="successSound" src="{{ asset('assets/sounds/success.mp3') }}" preload="auto"></audio>
+<audio id="failureSound" src="{{ asset('assets/sounds/failure.mp3') }}" preload="auto"></audio>
+
 @endsection
 
 @section('scripts')
-<script src="https://rawgit.com/schmich/instascan-builds/master/instascan.min.js"></script>
+<!-- <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script> -->
+
+<script src="{{ asset('assets/js/html5-qrcode.min.js') }}"></script>
+
+<!-- Load QRCode.js -->
+<!-- <script src="https://cdn.jsdelivr.net/npm/qrcodejs@latest/qrcode.min.js"></script> -->
+
+<script src="{{ asset('assets/js/qrcode.min.js') }}" ></script>
 
 
 <script>
-    let isProcessing = false;
-    let scanner = new Instascan.Scanner({
-        video: document.getElementById('preview')
-    });
+    document.addEventListener('DOMContentLoaded', function() {
 
-    const scanButton = document.getElementById('scanButton');
-    const stopScanButton = document.getElementById('stopScanButton');
+        // Get references to the audio elements once the DOM is ready
+        const successAudio = document.getElementById('successSound');
+        const failureAudio = document.getElementById('failureSound');
 
-    // Function to handle the AJAX refresh of the attendance list
-    function refreshAttendanceList() {
-        fetch("{{ route('attendances.students.list', ['attendance' => $attendance]) }}", {
-                method: 'GET',
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest'
-                }
-            })
-            .then(response => response.json())
-            .then(data => {
-                document.getElementById('attendance-list-container').innerHTML = data.html;
-                document.getElementById('attendance-count').textContent = data.count;
-            })
-            .catch(error => console.error('Error refreshing list:', error));
-    }
+        // Helper function to play a specific sound
+        function playSound(audioElement) {
+            if (audioElement) {
+                // Stop and rewind the audio before playing to allow for rapid, sequential scans
+                audioElement.pause();
+                audioElement.currentTime = 0;
+                audioElement.play().catch(error => {
+                    // Catch the common 'The play() request was interrupted' error 
+                    // or if the browser blocks autoplay before user interaction.
+                    console.warn('Audio playback failed:', error);
+                });
+            }
+        }
 
-
-    // Start Scan
-    scanButton.addEventListener('click', function() {
-        scanner.addListener('scan', function(content) {
+        // --- QR Code Scanner Logic (using Html5QrcodeScanner) ---
+        const qrCodeSuccessCallback = async (decodedText, decodedResult) => {
             if (isProcessing) return;
             isProcessing = true;
 
-            const url = `{{ route('attendances.popStudent', ['attendance' => $attendance, 'scannedData' => 'REPLACE_ME']) }}`
-                .replace('REPLACE_ME', encodeURIComponent(content));
-
-            fetch(url, {
+            const url =
+                `{{ route('attendances.popStudent', ['attendance' => $attendance, 'scannedData' => 'REPLACE_ME']) }}`
+                .replace('REPLACE_ME', encodeURIComponent(decodedText));
+            try {
+                const response = await fetch(url, {
                     method: 'GET',
                     headers: {
                         'X-Requested-With': 'XMLHttpRequest'
                     }
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.status === 'success') {
-                        refreshAttendanceList();
-                    } else {
-                        console.error('Error:', data.message);
-                    }
-                })
-                .catch(error => console.error('Error:', error))
-                .finally(() => {
-                    setTimeout(() => {
-                        isProcessing = false;
-                    }, 1500);
                 });
-        });
 
-        Instascan.Camera.getCameras()
-            .then(function(cameras) {
-                if (cameras.length > 0) {
-                    scanner.start(cameras[1] || cameras[0]);
-                    // Toggle buttons
-                    scanButton.style.display = "none";
-                    stopScanButton.style.display = "inline-block";
+                if (response.status === 200) {
+                    // Status 200: Student was popped, list still exists.
+                    await refreshAttendanceList();
+                    playSound(successAudio);
+                } else if (response.status === 201) {
+                    // Status 201: Last student was popped, attendance record was deleted.
+                    // Redirect to the seances index page as this attendance list is gone.
+                    playSound(successAudio);
+                    window.location.href = "{{ route('seances.index', ['teacherId' => auth()->user()->id]) }}";
                 } else {
-                    console.error('No cameras found.');
+                    // Handle other errors (403, 404, etc.)
+                    const data = await response.json();
+                    console.error('Error:', data.message);
+                    playSound(failureAudio);
                 }
-            })
-            .catch(function(e) {
-                console.error(e);
+            } catch (error) {
+                console.error('Error processing scan:', error);
+                playSound(failureAudio);
+            } finally {
+                // Add a small delay before allowing the next scan
+                setTimeout(() => {
+                    isProcessing = false;
+                }, 1500);
+            }
+        };
+
+        const qrCodeErrorCallback = (errorMessage) => {
+            // This callback is called when a QR code is not found or other errors occur.
+            // We can often ignore it to allow for continuous scanning.
+        };
+
+        let isProcessing = false;
+
+        async function refreshAttendanceList() {
+            try {
+                const response = await fetch("{{ route('attendances.students.list', ['attendance' => $attendance]) }}", { // prettier-ignore
+                    method: 'GET',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                });
+
+                // --- ADDED: Check for successful HTTP status (200-299) ---
+                if (!response.ok) {
+                    // Read the response text to get the HTML error page content for debugging
+                    const errorText = await response.text();
+                    console.error(`HTTP Error! Status: ${response.status}`, errorText.substring(0, 100) + '...');
+                    throw new Error(`Server returned HTTP status ${response.status}`);
+                }
+
+                // --- The rest of your original logic proceeds only if status is OK ---
+                const data = await response.json(); // This will now only execute on a 200-299 status
+                document.getElementById('attendance-list-container').innerHTML = data.html;
+                document.getElementById('attendance-count').textContent = data.count;
+
+            } catch (error) {
+                console.error('Error refreshing list:', error);
+            }
+        }
+        // Check if the library is loaded
+        if (typeof Html5QrcodeScanner !== 'undefined') {
+            const html5QrcodeScanner = new Html5QrcodeScanner(
+                "qr-reader", // ID of the container element
+                {
+                    fps: 10,
+                    qrbox: {
+                        width: 250,
+                        height: 250
+                    },
+                    rememberLastUsedCamera: true,
+                },
+                /* verbose= */
+                false
+            );
+            html5QrcodeScanner.render(qrCodeSuccessCallback, qrCodeErrorCallback);
+        } else {
+            console.error('html5-qrcode library failed to load.');
+            const errorContainer = document.getElementById('scanner-error'); // Assuming you might add this back
+            errorContainer.textContent = 'QR Scanner library failed to load. Please check your connection and try again.';
+            errorContainer.classList.remove('hidden'); // Assuming you might add this back
+        }
+
+        // --- Share Modal QR Code Logic ---
+        const shareButton = document.getElementById('shareButton');
+        const qrModal = document.getElementById('qrModal');
+        const closeQrModal = document.getElementById('closeQrModal');
+        const qrCodeDiv = document.getElementById('qrcode');
+
+        let qrCodeInstance = null;
+
+        shareButton.addEventListener('click', function() {
+            qrModal.classList.remove('hidden');
+
+            qrCodeDiv.innerHTML = "";
+
+            // Generate QR code for current URL
+            qrCodeInstance = new QRCode(qrCodeDiv, {
+                text: window.location.href,
+                width: 300, // increase width
+                height: 300, // increase height
+                colorDark: "#000000",
+                colorLight: "#ffffff",
+                correctLevel: QRCode.CorrectLevel.H
             });
-    });
-
-    // Stop Scan
-    stopScanButton.addEventListener('click', function() {
-        scanner.stop()
-            .then(() => {
-                console.log("Scanner stopped.");
-                // Toggle buttons
-                stopScanButton.style.display = "none";
-                scanButton.style.display = "inline-block";
-            })
-            .catch(err => console.error("Error stopping scanner:", err));
-    });
-</script>
-
-<!-- Load QRCode.js -->
-<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
-
-<script>
-    const shareButton = document.getElementById('shareButton');
-    const qrModal = document.getElementById('qrModal');
-    const closeQrModal = document.getElementById('closeQrModal');
-    const qrCodeDiv = document.getElementById('qrcode');
-
-    let qrCodeInstance = null;
-
-    shareButton.addEventListener('click', function() {
-        // Show modal
-        qrModal.classList.remove('hidden');
-
-        // Clear old QR code if exists
-        qrCodeDiv.innerHTML = "";
-
-        // Generate QR code for current URL
-        qrCodeInstance = new QRCode(qrCodeDiv, {
-            text: window.location.href,
-            width: 300, // increase width
-            height: 300, // increase height
-            colorDark: "#000000",
-            colorLight: "#ffffff",
-            correctLevel: QRCode.CorrectLevel.H
         });
 
-    });
-
-    closeQrModal.addEventListener('click', function() {
-        qrModal.classList.add('hidden');
-    });
-
-    // Close modal when clicking outside content
-    qrModal.addEventListener('click', function(e) {
-        if (e.target === qrModal) {
+        closeQrModal.addEventListener('click', function() {
             qrModal.classList.add('hidden');
-        }
+        });
+
+        // Close modal when clicking outside content
+        qrModal.addEventListener('click', function(e) {
+            if (e.target === qrModal) {
+                qrModal.classList.add('hidden');
+            }
+        });
     });
 </script>
 

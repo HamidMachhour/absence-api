@@ -36,6 +36,8 @@ return new class extends Migration
             $table->date('current_academic_start')->nullable(); // Start date of the current academic year
             $table->date('current_academic_end')->nullable();   // End date of the current academic year
 
+            // System Settings
+            $table->boolean('process_attendances_enabled')->default(true); // Enable/disable automatic attendance processing
 
             $table->timestamps();
         });

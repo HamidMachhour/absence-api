@@ -31,7 +31,7 @@
                     src="{{ $user->userImage->uri ?? asset('images/no-image.png') }}">
             </a>
         </div>
- 
+
         <h3 class="profile-username text-center">{{ $user->fullName() }}</h3>
 
         <p class="text-muted text-center">{{ $user->localRole() }}</p>
@@ -41,28 +41,29 @@
             <li class="list-group-item">
                 <a class="float-right">{{ $user->email }}</a>
             </li>
+            @php
+            $student = $user->students()->latest()->first();
+            $classe = $student ? $student->classe : null;
+            @endphp
+            @if(isset($student))
             <li class="list-group-item">
                 <b class="float-right">{{__('vocab.class')}}</b>
-                @php
-                $student = $user->students()->latest()->first();
-                $classe = $student ? $student->classe : null;
-                @endphp
-
                 <a href="{{ route('students.index', ['classeId' => optional($classe)->id]) }}" class="float-left">
                     {{ optional($classe)->classeName() ?? '' }}
                 </a>
             </li>
+            @endif
         </ul>
 
         @auth
         <div class="btn-group mx-1">
-            @if (auth()->user()->isStudent())
+            @if (auth()->user()->id === $user->id || auth()->user()->hasRole('admin'))
+            @if (isset($student))
             <a class="btn btn-app bg-warning mx-1"
                 href="{{ route('students.card', ['student' => $student->id]) }}">
                 <i class="far fa-address-card"></i> {{__('vocab.card')}}
             </a>
             @endif
-            @if (auth()->user()->id === $user->id || auth()->user()->hasRole('admin'))
             <a href="{{ route('users.edit', ['user' => $user->id]) }}" class="btn btn-app bg-info mx-1">
                 <i class="fas fa-edit"></i>
                 {{__('vocab.edit')}}

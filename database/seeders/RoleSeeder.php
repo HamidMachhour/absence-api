@@ -22,6 +22,10 @@ class RoleSeeder extends Seeder
             ['name' => 'مسير', 'nameFr' => 'gestionnaire', 'nameEn' => 'manager', 'nameZ' => 'ⴰⵎⵙⵡⵓⵇⴻⴹ'],
             ['name' => 'استاد', 'nameFr' => 'professeur', 'nameEn' => 'teacher', 'nameZ' => 'ⴰⵙⴻⵍⵎⴰⴷ'],
             ['name' => 'تلميذ', 'nameFr' => 'etudiant', 'nameEn' => 'student', 'nameZ' => 'ⴰⵏⴻⵍⵎⴰⴷ'],
+            //add guest role
+            ['name' => 'ضيف', 'nameFr' => 'invité', 'nameEn' => 'guest', 'nameZ' => 'ⴰⵣⵓⵍ'],
+            //add terminal role
+            ['name' => 'محطة', 'nameFr' => 'terminal', 'nameEn' => 'terminal', 'nameZ' => 'ⵜⴰⵎⵎⴰⵣⵉⵜ'],
         ];
         // Create 4 users
         foreach ($roles as $rolename) {

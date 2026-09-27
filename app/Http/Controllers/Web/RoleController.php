@@ -30,7 +30,7 @@ class RoleController extends Controller
                 'roles' => $roles,
             ]);
         } catch (Exception $e) {
-            return view('error', ["message" => __('vocab.empty')  . $e->getMessage()]);
+            return view('error', ["message" => __('vocab.no_data')  . $e->getMessage()]);
         }
     }
     /**
@@ -58,7 +58,7 @@ class RoleController extends Controller
      */
     public function store(Request $request, V1RoleController $controller)
     {
-        $response = $controller->store($request);
+        /*         $response = $controller->store($request);
         // Get the HTTP status code from the response
         $status_code = $response->getStatusCode();
         $responseContent = $response->content();
@@ -69,7 +69,7 @@ class RoleController extends Controller
         } else {
             $message = isset($data['message']) ? $data['message'] : __('vocab.action_failure') . ' ' . __('vocab.try_again');
             return back()->withErrors(['message' => $message]);;
-        }
+        } */
     }
 
     /**
@@ -110,7 +110,7 @@ class RoleController extends Controller
      */
     public function update(Request $request, Role $role, V1RoleController $controller)
     {
-        $response = $controller->update($request, $role);
+        /*      $response = $controller->update($request, $role);
         // Get the HTTP status code from the response
         $status_code = $response->getStatusCode();
         $responseContent = $response->content();
@@ -121,7 +121,7 @@ class RoleController extends Controller
         } else {
             $message = isset($data['message']) ? $data['message'] : __('vocab.action_failure') . ' ' . __('vocab.try_again');
             return back()->withErrors(['message' => $message]);;
-        }
+        } */
     }
 
     /**
@@ -132,7 +132,7 @@ class RoleController extends Controller
      */
     public function destroy(Role $role, V1RoleController $controller)
     {
-        $response = $controller->destroy($role);
+        /*        $response = $controller->destroy($role);
         $status_code = $response->getStatusCode();
         $responseContent = $response->content();
         $data = json_decode($responseContent, true); // true to convert to an associative array
@@ -146,11 +146,13 @@ class RoleController extends Controller
             $message = isset($data['message']) ? $data['message'] : __('vocab.delete_failed');
         }
         return redirect()->route('roles.index')->with('message', $message);
+  */
     }
 
     public function destroyAll(V1RoleController $controller)
     {
-        $response = $controller->destroyAll();
+
+        /*   $response = $controller->destroyAll();
         $status_code = $response->getStatusCode();
         $responseContent = $response->content();
         $data = json_decode($responseContent, true); // true to convert to an associative array
@@ -164,5 +166,6 @@ class RoleController extends Controller
             $message = isset($data['message']) ? $data['message'] : __('vocab.delete_failed');
         }
         return redirect()->route('roles.index')->with('message', $message);
+ */
     }
 }

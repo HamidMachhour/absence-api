@@ -19,6 +19,8 @@ return  [
 
     'absence_justify' => 'Justifier l\'absence',
     'absence_justified' => 'Absence justifiée',
+    'absence_not_justified' => 'Absence non justifiée',
+
     'absence_not_found' => 'Absence non trouvée',
     'absence_not_updated' => 'Absence non mise à jour',
 
@@ -79,6 +81,10 @@ return  [
     'classe_name_z' => 'Nom de la classe (Tamazight)',
 
     'classes_added' => ' Classes ajoutées avec succès',
+
+    'classe_emptied_success' => 'Classe vidée avec succès !',
+    'classe_emptied_failure' => 'Échec du vidage de la classe',
+
     'classes' => 'Classes',
     'clear' => 'Effacer',
     'code' => 'Code',
@@ -128,8 +134,9 @@ return  [
     'email_address' => 'Adresse email',
     'email_not_verified' => 'Email non vérifié',
     'email' => 'Email',
+    'empty' => 'Vider',
     'empty_list' => 'Vider la liste',
-    'empty' => 'Aucune donnée disponible',
+    'no_data' => 'Aucune donnée disponible',
     'enable' => 'Activer',
     'enroll' => 'S\'inscrire',
     'enrolled' => 'Inscrit',
@@ -243,6 +250,8 @@ return  [
     'primary_address' => 'Adresse principale',
     'principal_menu' => 'Menu principal',
     'print' => 'Imprimer',
+    'print_to_pdf' => 'Imprimer en PDF',
+
     'profile_image_set' => 'Image de profil définie avec succès',
     'profile_image' => 'Image de profil',
     'profile_update_failure' => 'Échec de la mise à jour du profil',
@@ -259,11 +268,18 @@ return  [
     'register_success' => 'Compte créé avec succès !',
     'register' => 'S\'inscrire',
     'registration_demand' => 'Demande d\'inscription',
+    'regarding_the_student' => 'Concernant l\'élève',
     'registration_demandes' => 'Demandes d\'inscription',
     'rejected' => 'Rejeté',
     'remember_me' => 'Se souvenir de moi',
     'remove_image' => 'Retirer l\'image',
     'report' => 'Rapport',
+    'report_body_intro_acts' => 'Je vous informe, Monsieur le Surveillant Général, que l\'élève susmentionné a commis les actes suivants',
+    'report_body_proposed_action_intro' => 'Par conséquent, et pour assurer le déroulement normal des cours, je vous propose la procédure suivante',
+    'report_footer_greeting' => 'Bien cordialement',
+    'report_signature' => 'Signature',
+    'report_footer_conclusion' => 'Et vous, monsieur, pouvez prendre toute mesure supplémentaire autorisée par la loi que vous jugerez appropriée pour enrayer ce comportement.',
+    'report_subject_title' => 'Objet : Rapport',
     'reset_password' => 'Réinitialiser le mot de passe',
     'reset' => 'Réinitialiser',
     'role_exist' => 'Ce rôle est déjà attribué à l\'utilisateur.',
@@ -430,6 +446,9 @@ return  [
     'academic_start_date' => 'Date de début académique',
     'academic_end_date' => 'Date de fin académique',
 
+    'system_settings' => 'Paramètres système',
+    'enable_automatic_attendance_processing' => 'Activer le traitement automatique de la présence',
+
     'misconduct_management' => 'Gestion des Fautes',
     'misconduct_act' => 'Type de Faute',
     'misconduct_acts' => 'Types de Fautes',
@@ -454,7 +473,41 @@ return  [
     'error_deleting_proposed_action' => 'Erreur lors de la suppression de l\'Action Proposée',
     'proposed_actions_deleted_successfully' => 'Actions Proposées supprimées avec succès',
     'error_deleting_proposed_actions' => 'Erreur lors de la suppression des Actions Proposées',
-    
+
     'misconduct_reports' => 'Rapports de faute',
     'misconduct_report' => 'Rapport de faute',
+
+    'draft' => 'Brouillon',
+    'submitted' => 'Soumis',
+    'reviewed' => 'Examiné',
+    'archived' => 'Archivé',
+
+    'to_change_status' => 'pour changer le status du rapport.',
+
+    'other_acts' => 'Autres fautes',
+    'other_propositions' => 'Autres propositions',
+
+    'misconduct_report_created' => 'Rapport de mauvaise conduite créé avec succès',
+    'error_creating_misconduct_report' => 'Erreur lors de la création du rapport de mauvaise conduite',
+    'error_updating_misconduct_report' => 'Erreur lors de la mise à jour du rapport de mauvaise conduite',
+    'error_deleting_misconduct_report' => 'Erreur lors de la suppression du rapport de mauvaise conduite',
+    'misconduct_report_updated' => 'Rapport de mauvaise conduite mis à jour avec succès',
+    'misconduct_report_deleted' => 'Rapport de mauvaise conduite supprimé avec succès',
+
+    'logo_path' => 'Chemin du Logo (URL)',
+
+    'select_room'=>'Sélectionner une salle',
+    'no_room_available' => 'Aucune salle disponible à afficher.',
+    'please_select_room' => 'Veuillez sélectionner une salle pour afficher le tableau de bord de présence.',
+    'no_attendance_data' => 'Aucune donnée de présence disponible pour la salle sélectionnée.',
+    'terminal_mode' => 'Mode Terminal',
+
+    'next_seance_found' => 'Prochaine séance trouvée',
+    'no_more_seance' => 'Plus de séances dans cette salle aujourd\'hui',
+    'qr_scanner_load_error' => 'La bibliothèque du scanner QR n\'a pas pu être chargée. Veuillez réessayer.',
+
+    'take_image' => 'Prendre une image',
+    'capture' => 'Capturer',
+    'retake' => 'Reprendre',
+    'take_image_description' => 'Prenez une photo avec la webcam et enregistrez-la comme image de profil.',
 ];

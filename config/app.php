@@ -3,7 +3,17 @@
 use Illuminate\Support\Facades\Facade;
 
 return [
-
+    /*
+    | --------------------------------------------------------------------------
+    | Application Installed
+    |--------------------------------------------------------------------------
+    |
+    | This value indicates whether the application has been installed.
+    | It is used to prevent access to installation routes once the
+    | application setup is complete.
+    |   
+ */
+    'installed' => env('INSTALL_COMPLETE', false),
     /*
     |--------------------------------------------------------------------------
     | Application Name
@@ -15,7 +25,7 @@ return [
     |
     */
 
-    'name' => env('APP_NAME', 'Laravel'),
+    'name' => env('APP_NAME', 'Absence'),
 
     /*
     |--------------------------------------------------------------------------
@@ -69,8 +79,7 @@ return [
     |
     */
 
-    'timezone' => 'UTC',
-
+    'timezone' => env('APP_TIMEZONE', 'UTC'),
     /*
     |--------------------------------------------------------------------------
     | Application Locale Configuration
@@ -82,7 +91,7 @@ return [
     |
     */
 
-    'locale' => 'en',
+    'locale' => 'ar',
 
     /*
     |--------------------------------------------------------------------------

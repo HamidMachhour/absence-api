@@ -45,7 +45,7 @@
             <x-misconduct_act-row :misconduct_act="$misconduct_act" />
             @empty
             <tr>
-                <td colspan="3">{{ __('vocab.empty') }}</td>
+                <td colspan="3">{{ __('vocab.no_data') }}</td>
             </tr>
             @endforelse
         </tbody>

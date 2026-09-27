@@ -31,7 +31,7 @@ class SubjectController extends Controller
 
             return $subjects;
         } catch (Exception $e) {
-            return response()->json(['message' => __('vocab.empty') . $e->getMessage()], 404);
+            return response()->json(['message' => __('vocab.no_data') . $e->getMessage()], 404);
         }
     }
 
@@ -114,7 +114,7 @@ class SubjectController extends Controller
     {
         //
     }
-
+ 
     /**
      * Update the specified resource in storage.
      *
@@ -161,16 +161,7 @@ class SubjectController extends Controller
             return response()->json(['message' => __('vocab.not_authorized')], 403);
         }
 
-        // Check if the subject is currently in use by any user
-        $isSubjectUsed = Seance::where('subjectId', $subject->id)->exists();
-
-        if ($isSubjectUsed) {
-            return response()->json([
-                'message' => __('vocab.delete_subject_failed')
-            ], 409); // 409 Conflict is appropriate for this kind of error
-        }
-
-        // If the subject is not used, safely delete it
+        // The 'deleting' event on the Subject model will handle cascading soft deletes.
         $subject->delete();
 
         // Return a successful response. 200 OK or 204 No Content are good choices.
@@ -188,11 +179,11 @@ class SubjectController extends Controller
 
         try {
             // Find all subjects that are currently in use
-            $usedSubjectIds = DB::table('Seance')->pluck('subjectId')->unique();
+            $usedSubjectIds = DB::table('Seance')->whereNull('deleted_at')->pluck('subjectId')->unique();
 
-            // Delete all subjects whose IDs are NOT in the list of used subjects
-            Subject::whereNotIn('id', $usedSubjectIds)->delete();
-
+            // Fetch and delete unused subjects to trigger model events.
+            $subjectsToDelete = Subject::whereNotIn('id', $usedSubjectIds)->get();
+            $subjectsToDelete->each->delete();
             return response()->json(['message' => __('vocab.delete_success')], 200);
         } catch (\Exception $e) {
             // Return a generic error message for any exceptions

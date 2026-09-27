@@ -20,6 +20,9 @@ class DatabaseSeeder extends Seeder
             PlanSeeder::class,
             RoleSeeder::class,
             _DaySeeder::class,
+            MisconductActSeeder::class,
+            ProposedActionSeeder::class,
+            
             UserSeeder::class,        // Needs to run before UserImageSeeder
             UserImageSeeder::class,   // Needs to run before ClasseSeeder (based on your foreign key error)
             AddressSeeder::class,
@@ -39,6 +42,7 @@ class DatabaseSeeder extends Seeder
             AttendanceStudentSeeder::class,
             AbsenceSeeder::class,
             AbsenceStudentSeeder::class,
+        
         ]);
     }
 }

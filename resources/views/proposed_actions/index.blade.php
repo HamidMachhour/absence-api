@@ -45,7 +45,7 @@
             <x-proposed_action-row :proposed_action="$proposed_action" />
             @empty
             <tr>
-                <td colspan="3">{{ __('vocab.empty') }}</td>
+                <td colspan="3">{{ __('vocab.no_data') }}</td>
             </tr>
             @endforelse
         </tbody>

@@ -9,7 +9,7 @@ namespace App\Models;
 use DateTime;
 use Illuminate\Http\Request;
 use Illuminate\Database\Eloquent\SoftDeletes;
-
+use Illuminate\Support\Facades\DB;
 
 /**
  * Class Absence
@@ -24,7 +24,6 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  */
 class Absence extends AbsenceModel
 {
-    use SoftDeletes;
 
     protected $table = 'Absence';
 
@@ -32,6 +31,19 @@ class Absence extends AbsenceModel
     protected $fillable = [
         'seanceId',
     ];
+
+        protected static function booted()
+    {
+        parent::boot();
+
+        static::deleting(function ($absence) {
+            // Use a transaction to ensure data integrity
+            DB::transaction(function () use ($absence) {
+                $absence->absenceStudents->each->delete();
+            });
+        });
+    }
+
     public function seance()
     {
         return $this->belongsTo(Seance::class, 'seanceId');

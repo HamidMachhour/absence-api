@@ -24,21 +24,55 @@ class StudentController extends Controller
     public function getStudents(Request $request, Classe $classe)
     {
 
-        $students = Student::select(
+        if (!Auth::check()) {
+            return response()->json(['message' => __('vocab.not_authorized')], 403);
+        }
+
+        $user = Auth::user();
+
+        // Define the base query for selecting student and user data
+        $baseQuery = Student::select(
             DB::raw('Student.id as student_id'),
             DB::raw('_User.firstName'),
-            DB::raw('_User.lastName')
-
+            DB::raw('_User.lastName'),
+            DB::raw('_User.firstNameFr'),
+            DB::raw('_User.lastNameFr'),
+            DB::raw('_User.firstNameEn'),
+            DB::raw('_User.lastNameEn'),
+            DB::raw('_User.firstNameZ'),
+            DB::raw('_User.lastNameZ'),
+            DB::raw('Student.num'),
         )
             ->join('_User', '_User.id', '=', 'Student.userId')
             ->where('classeId', $classe->id)
             ->whereNull('Student.deleted_at')
-            ->whereNull('_User.deleted_at')
-            ->get();
+            ->whereNull('_User.deleted_at');
+
+        // if the user is a student, ensure they can only access their own data
+        if ($user->hasRole('student')) {
+
+            // Add the user-specific constraint to the base query
+            $studentData = $baseQuery->where('Student.userId', $user->id)->get();
+
+            // Check if the student exists and belongs to the specified class
+            // The where('classeId', $classe->id) in the base query already handles the class check.
+            if ($studentData->isEmpty()) {
+                // This means the user is a student, but either they are not linked to a student record, 
+                // or they don't belong to the requested $classe.
+                return response()->json(['message' => __('vocab.not_authorized')], 403);
+            } else {
+                // Return the single student in the same collection format
+                return response()->json(['students' => $studentData]);
+            }
+        }
+
+        // For non-student roles, fetch all students in the class using the base query
+        $students = $baseQuery->get();
 
         return response()->json(['students' => $students]);
     }
 
+    
     public function index(Request $request, $page_size = 40)
     {
         if (!Auth::check()) {
@@ -48,26 +82,17 @@ class StudentController extends Controller
         try {
             if ($request->filled("page_size"))
                 $page_size = $request->input("page_size");
-            /*
-            $query = Student::withSum('absences','plage')
-            ->withCount('absences')
-            ->groupByRaw('"Student".id,"Student".userId,"Student".classeId,"Student".num')
-            ->filter($request);
-            */
-            $query = Student::query()
-                ->select(
-                    DB::raw('Student.*'),
-                    DB::raw('sum(AbsenceStudent.plage) as absences_sum_plage'),
-                    DB::raw('count(AbsenceStudent.studentId) as absences_count ')
-                )
-                ->leftJoin('AbsenceStudent', 'Student.id', '=', 'AbsenceStudent.studentId')
-                ->groupBy('Student.id', 'Student.userId', 'Student.classeId', 'Student.num')
-                ->filter($request);
 
+            // Use Eloquent's withCount and withSum for cleaner queries and to avoid GROUP BY issues.
+            // The filter() method in the Student model is adjusted to handle this.
+            $query = Student::withSum('absences as absences_sum_plage', 'plage')
+                ->withCount('absences as absences_count')
+                ->with('user')
+                ->filter($request);
 
             return $query->paginate($page_size);
         } catch (Exception $e) {
-            return response()->json(['message' => __('vocab.empty') . $e->getMessage()], 404);
+            return response()->json(['message' => __('vocab.no_data') . $e->getMessage()], 404);
         }
     }
 
@@ -76,18 +101,18 @@ class StudentController extends Controller
         if (!Auth::check()) {
             return response()->json(['message' => __('vocab.not_authorized')], 403);
         }
+
         try {
             if ($request->filled("page_size"))
                 $page_size = $request->input("page_size");
 
-            return Student::where('classeId', $classe->id)
-                ->withSum('absences', 'plage')
-                ->withCount('absences')
-                ->groupByRaw('Student.id,Student.userId,Student.classeId, Student.num')
+            return Student::where('classeId', $classe->id) // Pass the ID, not the object
+                ->withSum('absences as absences_sum_plage', 'plage')
+                ->withCount('absences as absences_count')
                 ->filter($request)
                 ->paginate($page_size);
         } catch (Exception $e) {
-            return response()->json(['message' => __('vocab.empty') . $e->getMessage()], 404);
+            return response()->json(['message' => __('vocab.no_data') . $e->getMessage()], 404);
         }
     }
     /**
@@ -108,21 +133,21 @@ class StudentController extends Controller
             'userId' => 'required|string',
         ]);
 
-
         try {
-            if (!Auth::user()->hasRole('admin') && $request->filled('classeId')) {
-                $classeId = $validatedData['classeId'];
-                //fail if the class is not owned by current user
-                $classe = Classe::where('userId', auth()->user()->id)
-                    ->findOrFail($classeId);
-            }
+            $student = DB::transaction(function () use ($validatedData) {
+                if (!Auth::user()->hasRole('admin')) {
+                    // Fail if the class is not owned by the current user
+                    Classe::where('userId', auth()->user()->id)
+                        ->findOrFail($validatedData['classeId']);
+                }
 
-            $validatedData['classeId'] = $classeId;
-            // Create a new Student object and assign the validated data
-            $student = Student::create($validatedData);
-            // Return a response
+                // Create a new Student object and assign the validated data
+                return Student::create($validatedData);
+            });
+
             return response()->json(['message' => __('vocab.action_success'), 'student' => $student], 201);
         } catch (Exception $exception) {
+            // Catches ModelNotFoundException from findOrFail as well as other potential errors.
             return response()->json(['message' => __('vocab.task_failed') . ' ' . __('vocab.try_again') . $exception->getMessage()], 404);
         }
     }
@@ -284,18 +309,20 @@ class StudentController extends Controller
 
             // Add students to the CSV
             foreach ($students as $student) {
+                $user = $student->user; // Eager load user to avoid N+1
                 $itemData = [
                     $student->id,
-                    $student->code,
-                    $student->firstName,
-                    $student->lastName,
-                    $student->firstNameFr,
-                    $student->lastNameFr,
-                    $student->firstNameEn,
-                    $student->lastNameEn,
-                    $student->firstNameZ,
-                    $student->lastNameZ,
-                    $student->imageId,
+                    $user->code,
+                    $user->firstName,
+                    $user->lastName,
+                    $user->firstNameFr,
+                    $user->lastNameFr,
+                    $user->firstNameEn,
+                    $user->lastNameEn,
+                    $user->firstNameZ,
+                    $user->lastNameZ,
+                    $student->num, // Corrected order
+                    $user->imageId,
                     $student->classeId,
                 ];
                 $csv->insertOne($itemData);

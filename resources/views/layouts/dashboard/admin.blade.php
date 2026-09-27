@@ -153,32 +153,66 @@
 
         <!-- Main row -->
         <section class="col-lg-12">
+            <div class=" mx-2 mb-4">
+                <x-absence-filter />
+            </div>
             <!-- Custom tabs (Charts with tabs)-->
-            <div class="card mx-2">
-
-                <div class="card-header">
+            <div class="card  mx-2">
+                <div class="card-header gap-2">
                     <h3 class="card-title">
                         <i class="fas fa-chart-pie mr-1"></i>
                         {{__('vocab.absence')}}
                     </h3>
+                    <div class="card-tools">
+                        <button type="button" class="btn btn-tool" data-card-widget="collapse">
+                            <i class="fas fa-minus"></i>
+                        </button>
+                    </div>
                 </div><!-- /.card-header -->
                 <div class="card-body">
-                    <x-absence-filter />
-                </div>
-                <div class="row">
-                    <div class="card-body col-lg-6">
-                        <canvas id="trendChart" height="300"></canvas>
-                    </div>
-                    <div class="card-body col-lg-6">
-                        <canvas id="classesAbsenceChart" height="300"></canvas>
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="card-body col-lg-12">
-                        <canvas id="studentsAbsenceChart" height="300"></canvas>
+                    <div class="row">
+                        <div class="card-body col-lg-4">
+                            <canvas id="trendChart" height="300"></canvas>
+                        </div>
+                        <div class="card-body col-lg-4">
+                            <canvas id="classesAbsenceChart" height="300"></canvas>
+                        </div>
+                        <div class="card-body col-lg-4">
+                            <canvas id="studentsAbsenceChart" height="300"></canvas>
+                        </div>
                     </div>
                 </div>
             </div>
-        </section>
-    </div><!-- /.container-fluid -->
+
+            <div class="card  mx-2">
+
+                <div class="card-header gap-2">
+                    <h3 class="card-title">
+                        <i class="fas fa-chart-pie mr-1"></i>
+                        {{__('vocab.misconduct_reports')}}
+                    </h3>
+                    <div class="card-tools">
+                        <button type="button" class="btn btn-tool" data-card-widget="collapse">
+                            <i class="fas fa-minus"></i>
+                        </button>
+                    </div>
+                </div><!-- /.card-header -->
+                <div class="card-body">
+                    <div class="row">
+                        <div class="card-body col-lg-4">
+                            <canvas id="reportTrendChart" height="300"></canvas>
+                        </div>
+                        <div class="card-body col-lg-4">
+                            <canvas id="classesReportsChart" height="300"></canvas>
+                        </div>
+                        <div class="card-body col-lg-4">
+                            <canvas id="studentsReportsChart" height="300"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+    </div>
+</section>
+</div><!-- /.container-fluid -->
 </section>

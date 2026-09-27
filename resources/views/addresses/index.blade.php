@@ -32,7 +32,7 @@
                 <x-address-card :address="$address" />
             @endforeach
         @else
-            <p>{{__('vocab.empty')}}</p>
+            <p>{{__('vocab.no_data')}}</p>
         @endunless
     </div>
 

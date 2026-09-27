@@ -73,7 +73,7 @@
             <!-- Custom tabs (Charts with tabs)-->
             <div class="card mx-2">
 
-                <div class="card-header">
+                <div class="card-header d-flex gap-2  {{ App::getLocale() == 'ar' ? 'flex-row-reverse' : 'flex-row' }}">
                     <h3 class="card-title">
                         <i class="fas fa-chart-pie mr-1"></i>
                         {{__('vocab.absence')}}

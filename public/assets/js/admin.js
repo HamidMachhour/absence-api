@@ -1,4 +1,4 @@
-let chartOne, chartTwo, chartThree;
+let chartOne, chartTwo, chartThree, chartFour, chartFive, chartSix;
 
 $(document).ready(function () {
     var fromDate = new Date();
@@ -9,17 +9,17 @@ $(document).ready(function () {
     // Format date to "YYYY-MM-DD" required by input type="date"
     var formattedFromDate = fromDate.toISOString().substr(0, 10);
     var formattedToDate = toDate.toISOString().substr(0, 10);
-    /*
+    
     document.getElementById('from').value = formattedFromDate;
     document.getElementById('to').value = formattedToDate;
-    */
+    
 
-    $('#btn_filter').on('click', function () {
-        getChartData();
+    $('#btn_chart_filter').on('click', function () {
+        getChartAbsenceData();
+        getChartMisconductData();
     });
-
+ 
     $('#classe').change(function(){
         fetchStudents($('#classe').val());
     });
-    getChartData();
 });

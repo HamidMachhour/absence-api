@@ -169,9 +169,13 @@ class AbsenceController extends Controller
         return back()->with('message', $message);
     }
 
-    public function getChartData(Request $request)
+    public function getChartAbsenceData(Request $request, V1AbsenceController $v1Controller)
     {
-        $controller = new V1AbsenceController();
-        return $controller->getChartData($request);
+        return $v1Controller->getChartAbsenceData($request);
+    }
+
+     public function getChartMisconductReportData(Request $request, V1AbsenceController $v1Controller)
+    {
+        return $v1Controller->getChartMisconductReportData($request);
     }
 }

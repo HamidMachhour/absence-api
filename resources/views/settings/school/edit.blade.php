@@ -22,17 +22,17 @@
 @section('content')
 <div class="d-flex justify-content-center align-items-center">
     <div class="card card-primary">
-        <div class="card-header">
+        <div class="card-header d-flex gap-2  {{ App::getLocale() == 'ar' ? 'flex-row-reverse' : 'flex-row' }}">
             <h3 class="card-title">{{__('vocab.school_configuration')}}</h3>
         </div>
 
         {{-- Use the PUT method to update the single settings row --}}
         <form method="POST" action="{{ route('settings.school.update') }}">
             @csrf
-            @method('PUT') 
+            @method('PUT')
 
             @if (session('success'))
-                <div class="alert alert-success mt-3 mx-3">{{ session('success') }}</div>
+            <div class="alert alert-success mt-3 mx-3">{{ session('success') }}</div>
             @endif
 
             <div class='card-body'>
@@ -59,7 +59,7 @@
                     <p class="text-danger text-xs mt-1">{{ $message }}</p>
                     @enderror
                 </div>
-                
+
                 {{-- School Name (English) --}}
                 <div class="form-group">
                     <label for="name_en"> {{__('vocab.school_name')}} ({{__('vocab.english')}})</label>
@@ -108,7 +108,17 @@
                     <p class="text-danger text-xs mt-1">{{ $message }}</p>
                     @enderror
                 </div>
-                
+
+                {{-- Logo Path --}}
+                <div class="form-group">
+                    <label for="logo_path">{{__('vocab.logo_path')}} </label>
+                    <input id='logo_path' type="text" class="form-control" name="logo_path"
+                        value="{{ old('logo_path', $config?->logo_path ?? '') }}"
+                        placeholder="https://example.com/path/to/logo.png" />
+                    @error('logo_path')
+                    <p class="text-danger text-xs mt-1">{{ $message }}</p>
+                    @enderror
+                </div>
                 <hr class="my-4">
 
                 {{-- CONTACT & ADMIN SECTION --}}
@@ -122,7 +132,7 @@
                     <p class="text-danger text-xs mt-1">{{ $message }}</p>
                     @enderror
                 </div>
-                
+
                 <div class="form-group">
                     <label for="phone_number">{{__('vocab.phone_number')}} </label>
                     <input id='phone_number' type="text" class="form-control" name="phone_number"
@@ -131,7 +141,7 @@
                     <p class="text-danger text-xs mt-1">{{ $message }}</p>
                     @enderror
                 </div>
-                
+
                 <div class="form-group">
                     <label for="email">{{__('vocab.email')}} </label>
                     <input id='email' type="email" class="form-control" name="email"
@@ -165,6 +175,23 @@
 
                 {{-- Logo path field would typically be a file input, not a text input --}}
                 {{-- <div class="form-group">...</div> --}}
+
+                <hr class="my-4">
+                <h5 class="text-primary mb-3">{{__('vocab.system_settings')}}</h5>
+
+                <div class="form-group">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" value="1" id="process_attendances_enabled"
+                            name="process_attendances_enabled"
+                            {{ old('process_attendances_enabled', $config?->process_attendances_enabled ?? true) ? 'checked' : '' }}>
+                        <label class="form-check-label" for="process_attendances_enabled">
+                            {{ __('vocab.enable_automatic_attendance_processing') }}
+                        </label>
+                    </div>
+                    @error('process_attendances_enabled')
+                    <p class="text-danger text-xs mt-1">{{ $message }}</p>
+                    @enderror
+                </div>
 
             </div>
             <div class="card-footer">

@@ -4,11 +4,14 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\DB;
 
 class MisconductReport extends Model
 {
     use HasFactory;
     protected $table = 'MisconductReport';
+    use SoftDeletes;
 
     //fillable fields
     public $fillable = [
@@ -19,6 +22,17 @@ class MisconductReport extends Model
         'otherPropositions',
         'status'
     ];
+
+    protected static function booted()
+    {
+        static::deleting(function ($report) {
+            // Use a transaction to ensure data integrity
+            DB::transaction(function () use ($report) {
+                $report->misconductActs()->detach();
+                $report->proposedActions()->detach();
+            });
+        });
+    }
     // the status value
     public const STATUS_DRAFT = 'draft';
     public const STATUS_SUBMITTED = 'submitted';

@@ -28,7 +28,7 @@ class UserRoleController extends Controller
 
             return $userRoles;
         } catch (Exception $e) {
-            return response()->json(['message' => __('vocab.empty') . $e->getMessage()], 404);
+            return response()->json(['message' => __('vocab.no_data') . $e->getMessage()], 404);
         }
     }
 

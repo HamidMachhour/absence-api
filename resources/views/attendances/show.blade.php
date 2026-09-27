@@ -31,7 +31,7 @@
     <x-attendancestudent-card :attendance_student="$attendance_student" :seance='$attendance->seance' />
     @endforeach
     @else
-    <p class="flex justify-center">{{__('vocab.empty')}}</p>
+    <p class="flex justify-center">{{__('vocab.no_data')}}</p>
 
 </div>
 @endunless

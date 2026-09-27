@@ -16,7 +16,7 @@ class CreateAbsenceTable extends Migration
         Schema::create('Absence', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->string('seanceId',255);
-            $table->text('deleted_at')->nullable();
+             $table->timestamp('deleted_at')->nullable();;
             $table->timestamps();
         });
     }

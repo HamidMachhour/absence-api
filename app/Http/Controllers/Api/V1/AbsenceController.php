@@ -8,6 +8,7 @@ use App\Models\Absence;
 use App\Models\Student;
 use Illuminate\Http\Request;
 use App\Models\AbsenceStudent;
+use App\Models\MisconductReport;
 use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
@@ -17,41 +18,32 @@ class AbsenceController extends Controller
 
     public function ofUser(Request $request, User $user, $page_size = 40)
     {
-        if (!Auth::check()) {
+        if (!Auth::check() || Auth::user()->id != $user->id) {
             return response()->json(['message' => __('vocab.not_authorized')], 403);
         }
-        if (Auth::user()->id != $user->id) {
-            return response()->json(['message' => __('vocab.not_authorized')], 403);
-        }
+
         try {
+            $page_size = $request->input("page_size", 40);
 
-            if ($request->filled("page_size"))
-                $page_size = $request->input("page_size");
+            // 1. Get the IDs of all Student records associated with the User
+            $studentIds = Student::where('userId', $user->id)->pluck('id');
 
-
-
-            $absences = Absence::whereIn('id', function ($query) use ($user) {
-                $query->select('absenceId')
-                    ->from('AbsenceStudent')
-                    ->join('Student', 'Student.id', '=', 'AbsenceStudent.studentId')
-                    ->where('userId', $user->id)
-                    ->distinct();
+            // 2. Use a 'whereHas' relationship check (or a similar join) 
+            // to filter Absences based on the student IDs.
+            $absences = Absence::whereHas('absenceStudents', function ($query) use ($studentIds) {
+                $query->whereIn('studentId', $studentIds);
             })
+                // Note: You must ensure an 'students' relationship exists on your Absence model, 
+                // which typically relates through AbsenceStudent.
+
+                // Assuming your existing filter and eager loading are correct:
                 ->filter($request)
                 ->with('seance')
                 ->paginate($page_size);
-            /*
-            $absences = Absence::select('Absence.*')
-                ->join('AbsenceStudent', 'Absence.id', '=', 'AbsenceStudent.absenceId')
-                ->join('Student', 'AbsenceStudent.studentId', '=', 'Student.id')
-                ->join('_User', 'Student.userId', '=', '_User.id')
-                ->where('_User.id', $user->id)
-                ->distinct()
-                ->paginate($page_size);*/
 
             return $absences;
         } catch (Exception $e) {
-            return response()->json(['message' => __('vocab.empty') . $e->getMessage()], 404);
+            return response()->json(['message' => __('vocab.no_data')], 404);
         }
     }
 
@@ -74,7 +66,7 @@ class AbsenceController extends Controller
                 ->with('seance')
                 ->paginate($page_size);
         } catch (Exception $e) {
-            return response()->json(['message' => __('vocab.empty') . $e->getMessage()], 404);
+            return response()->json(['message' => __('vocab.no_data') . $e->getMessage()], 404);
         }
     }
 
@@ -98,14 +90,14 @@ class AbsenceController extends Controller
         // if the absence is related to a class that is owned by a manager, check if the user is the owner of the class
         if (auth()->user()->hasRole('manager') && !auth()->user()->hasRole('admin')) {
             $user = $absence->seance->classe->user;
-                if ($user->id != auth()->user()->id) {
-                    return response()->json(['message' => __('vocab.not_authorized')], 403);
+            if ($user->id != auth()->user()->id) {
+                return response()->json(['message' => __('vocab.not_authorized')], 403);
             }
         }
 
         try {
             DB::transaction(function () use ($absence) {
-                $absence->absenceStudents()->delete();
+                //$absence->absenceStudents()->delete();
                 $absence->delete();
             });
             // Return a response
@@ -127,11 +119,11 @@ class AbsenceController extends Controller
             return response()->json(['message' => __('vocab.not_authorized')], 403);
         }
 
-         // if the absence is related to a class that is owned by a manager, check if the user is the owner of the class
+        // if the absence is related to a class that is owned by a manager, check if the user is the owner of the class
         if (auth()->user()->hasRole('manager') && !auth()->user()->hasRole('admin')) {
             $user = $absence->seance->classe->user;
-                if ($user->id != auth()->user()->id) {
-                    return response()->json(['message' => __('vocab.not_authorized')], 403);
+            if ($user->id != auth()->user()->id) {
+                return response()->json(['message' => __('vocab.not_authorized')], 403);
             }
         }
 
@@ -153,14 +145,14 @@ class AbsenceController extends Controller
         if (!auth()->user()->hasRole('admin') && !auth()->user()->hasRole('manager')) {
             return response()->json(['message' => __('vocab.not_authorized')], 403);
         }
-         // if the absence is related to a class that is owned by a manager, check if the user is the owner of the class
+        // if the absence is related to a class that is owned by a manager, check if the user is the owner of the class
         if (auth()->user()->hasRole('manager') && !auth()->user()->hasRole('admin')) {
             $user = $absence->seance->classe->user;
-                if ($user->id != auth()->user()->id) {
-                    return response()->json(['message' => __('vocab.not_authorized')], 403);
+            if ($user->id != auth()->user()->id) {
+                return response()->json(['message' => __('vocab.not_authorized')], 403);
             }
         }
-        
+
         try {
             // Validate the request data
             $validatedData = request()->validate([
@@ -180,54 +172,164 @@ class AbsenceController extends Controller
         }
     }
 
-    public function getChartData(Request $request)
+    public function getChartAbsenceData(Request $request)
     {
         if (!Auth::check()) {
             return response()->json(['message' => __('vocab.not_authorized')], 403);
         }
 
-        $absenceData = Student::select(
-            DB::raw('strftime("%Y-%m-%d",AbsenceStudent.created_at) as date'),
-            DB::raw('Student.id as student_id'),
-            DB::raw('_User.firstName'),
-            DB::raw('_User.lastName'),
-            DB::raw('Student.classeId as classeId'),
-            DB::raw('Classe.name as classe_name'),
-            DB::raw('count(*) as nb_absences'),
-            DB::raw('sum(plage) as sum_plages'),
-            DB::raw('count(justification) as justifie'),
-            DB::raw('count(*)-count(justification) as non_justifie')
+        $user = Auth::user();
 
-        )
+        // Determine the correct date formatting function based on the database driver
+        $connection = DB::connection()->getDriverName();
+        $dateFormat = 'strftime("%Y-%m-%d", AbsenceStudent.created_at)'; // Default for SQLite
+        if ($connection === 'mysql') {
+            $dateFormat = "DATE_FORMAT(AbsenceStudent.created_at, '%Y-%m-%d')";
+        }
+
+        $absenceQuery = AbsenceStudent::query()
+            ->select(
+                DB::raw($dateFormat . ' as date'),
+                DB::raw('Student.id as student_id'),
+                DB::raw('_User.firstName'),
+                DB::raw('_User.lastName'),
+                DB::raw('Student.classeId as classeId'),
+                DB::raw('Classe.name as classe_name'),
+                DB::raw('count(AbsenceStudent.id) as nb_absences'),
+                DB::raw('sum(AbsenceStudent.plage) as sum_plages'),
+                DB::raw('count(AbsenceStudent.justification) as justifie'),
+                DB::raw('count(AbsenceStudent.id) - count(AbsenceStudent.justification) as non_justifie')
+            )
+            ->join('Student', 'AbsenceStudent.studentId', '=', 'Student.id')
             ->join('Classe', 'Classe.id', '=', 'Student.classeId')
-            ->join('AbsenceStudent', 'AbsenceStudent.studentId', '=', 'Student.id')
             ->join('_User', '_User.id', '=', 'Student.userId')
             ->whereNull('AbsenceStudent.deleted_at')
             ->whereNull('_User.deleted_at')
             ->whereNull('Student.deleted_at')
-            ->whereNull('Classe.deleted_at')
-            ->when($request->student, function ($query) use ($request) {
-                return $query->where('Student.id', $request->student);
-            })
-            ->when($request->classe, function ($query) use ($request) {
-                return $query->where('Student.classeId', $request->classe);
-            })
+            ->whereNull('Classe.deleted_at');
+
+        // 🔥 NEW: Limit data to the student's classes if the user is a student
+        if ($user->hasRole('student')) {
+            // Get all classeIds associated with the connected student
+            $classeIds = Student::where('userId', $user->id)->pluck('classeId');
+
+            // Apply the filter
+            $absenceQuery->whereIn('Student.classeId', $classeIds);
+
+            // Also, restrict to this specific student's ID for absence data
+            $studentIds = Student::where('userId', $user->id)->pluck('id');
+            $absenceQuery->whereIn('Student.id', $studentIds);
+        }
+
+
+        // Apply other filters from the request
+        $absenceData = $absenceQuery
             ->when($request->from, function ($query) use ($request) {
                 return $query->whereDate('AbsenceStudent.created_at', '>=', $request->from);
             })
             ->when($request->to, function ($query) use ($request) {
                 return $query->whereDate('AbsenceStudent.created_at', '<=', $request->to);
             })
+            ->when($request->student && !$user->hasRole('student'), function ($query) use ($request) {
+                // Allow filtering by student ONLY if the user is NOT a student
+                return $query->where('Student.id', $request->student);
+            })
+            ->when($request->classe && !$user->hasRole('student'), function ($query) use ($request) {
+                // Allow filtering by class ONLY if the user is NOT a student
+                return $query->where('Student.classeId', $request->classe);
+            })
             ->groupBy(
-                DB::raw('strftime("%Y-%m-%d",AbsenceStudent.created_at)'),
-                DB::raw('Student.id'),
-                DB::raw('_User.firstName'),
-                DB::raw('_User.lastName'),
-                DB::raw('Student.classeId'),
-                DB::raw('Classe.name')
+                DB::raw($dateFormat),
+                'Student.id',
+                '_User.firstName',
+                '_User.lastName',
+                'Classe.name',
+                'Student.classeId'
             )
             ->limit(50)
             ->get();
+
         return response()->json(['absenceData' => $absenceData]);
+    }
+
+
+    public function getChartMisconductReportData(Request $request)
+    {
+        if (!Auth::check()) {
+            return response()->json(['message' => __('vocab.not_authorized')], 403);
+        }
+
+        $user = Auth::user();
+
+        // Determine the correct date formatting function based on the database driver
+        $connection = DB::connection()->getDriverName();
+        $dateFormat = 'strftime("%Y-%m-%d", MisconductReport.created_at)'; // Default for SQLite
+        if ($connection === 'mysql') {
+            $dateFormat = "DATE_FORMAT(MisconductReport.created_at, '%Y-%m-%d')";
+        }
+
+        $reportQuery = MisconductReport::query()
+            ->select(
+                DB::raw($dateFormat . ' as date'),
+                DB::raw('Student.id as student_id'),
+                DB::raw('_User.firstName'),
+                DB::raw('_User.lastName'),
+                DB::raw('Student.classeId as classeId'),
+                DB::raw('Classe.name as classe_name'),
+                DB::raw('MisconductReport.status'),
+                DB::raw('count(MisconductReport.id) as nb_reports')
+            )
+            ->join('Student', 'MisconductReport.studentId', '=', 'Student.id')
+            ->join('Classe', 'Classe.id', '=', 'Student.classeId')
+            ->join('_User', '_User.id', '=', 'Student.userId')
+            ->whereNull('MisconductReport.deleted_at')
+            ->whereNull('_User.deleted_at')
+            ->whereNull('Student.deleted_at')
+            ->whereNull('Classe.deleted_at');
+
+
+        // 🔥 NEW: Limit data to the student's classes and student ID if the user is a student
+        if ($user->hasRole('student')) {
+            // Get all classeIds associated with the connected student
+            $classeIds = Student::where('userId', $user->id)->pluck('classeId');
+
+            // Apply the filter
+            $reportQuery->whereIn('Student.classeId', $classeIds);
+
+            // Also, restrict to this specific student's ID for misconduct reports
+            $studentId = Student::where('userId', $user->id)->pluck('id');
+            $reportQuery->whereIn('Student.id', $studentId);
+        }
+
+
+        // Apply other filters from the request
+        $reportData = $reportQuery
+            ->when($request->from, function ($query) use ($request) {
+                return $query->whereDate('MisconductReport.created_at', '>=', $request->from);
+            })
+            ->when($request->to, function ($query) use ($request) {
+                return $query->whereDate('MisconductReport.created_at', '<=', $request->to);
+            })
+            ->when($request->student && !$user->hasRole('student'), function ($query) use ($request) {
+                // Allow filtering by student ONLY if the user is NOT a student
+                return $query->where('Student.id', $request->student);
+            })
+            ->when($request->classe && !$user->hasRole('student'), function ($query) use ($request) {
+                // Allow filtering by class ONLY if the user is NOT a student
+                return $query->where('Student.classeId', $request->classe);
+            })
+            ->groupBy(
+                DB::raw($dateFormat),
+                'Student.id',
+                '_User.firstName',
+                '_User.lastName',
+                'Classe.name',
+                'MisconductReport.status',
+                'Student.classeId'
+            )
+            ->limit(50)
+            ->get();
+
+        return response()->json(['reportData' => $reportData]);
     }
 }

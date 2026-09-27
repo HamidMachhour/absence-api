@@ -28,7 +28,7 @@
             <!-- left column -->
             <div class="col-md-12">
                 <div class="card card-primary">
-                    <div class="card-header">
+                    <div class="card-header d-flex gap-2  {{ App::getLocale() == 'ar' ? 'flex-row-reverse' : 'flex-row' }}">
 
                         <div class="card-title">{{__('vocab.update').' '.__('vocab.account')}}</div>
                         @error('message')

@@ -3,6 +3,8 @@
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Api\V1\SeanceController;
+use App\Http\Controllers\Api\V1\AttendanceController;
 use App\Http\Controllers\Api\V1\UserController;
 use App\Http\Controllers\Api\V1\StudentController;
 use App\Http\Controllers\Api\V1\ClasseImageController;
@@ -105,6 +107,14 @@ Route::prefix('v1/store-images')
     Route::post('/upload', [ClasseImageController::class, 'upload']);
     Route::get('/download', [ClasseImageController::class, 'download']);
 });
+
+Route::prefix('v1/seances')
+    ->namespace('App\Http\Controllers\Api\V1')
+    ->middleware('auth:sanctum')
+    ->group(function () {
+        Route::get('/{seance}/roster', [SeanceController::class, 'roster']);
+        Route::post('/{seance}/attendance', [AttendanceController::class, 'submitForSeance']);
+    });
 
 
 

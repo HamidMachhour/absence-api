@@ -17,7 +17,7 @@ return new class extends Migration
             $table->string('userId',255);  
             $table->string('friend',255);
             $table->enum('status', ['pending', 'accepted','rejected','blocked'])->default('pending');
-            $table->text('deleted_at')->nullable();
+             $table->timestamp('deleted_at')->nullable();;
             $table->timestamps();
 
             // Add an index for quicker lookup of conversations

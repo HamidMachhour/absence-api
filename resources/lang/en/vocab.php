@@ -19,6 +19,7 @@ return  [
 
     'absence_justify' => 'Justify Absence',
     'absence_justified' => 'Absence Justified',
+    'absence_not_justified' => 'Absence not justified',
     'absence_not_found' => 'Absence not found',
     'absence_not_updated' => 'Absence not updated',
 
@@ -79,6 +80,10 @@ return  [
     'classe_name_z' => 'Class Name (Tamazight)',
 
     'classes_added' => ' Classes added successful',
+
+    'classe_emptied_success' => 'Class emptied successfully!',
+    'classe_emptied_failure' => 'Failed to empty class',
+
     'classes' => 'Classes',
     'clear' => 'Clear',
     'code' => 'Code',
@@ -129,8 +134,9 @@ return  [
     'email_address' => 'Email Address',
     'email_not_verified' => 'Email not verified',
     'email' => 'Email',
+    'empty' => 'Empty',
     'empty_list' => 'Empty List',
-    'empty' => 'No data available',
+    'no_data' => 'No data available',
     'enable' => 'Enable',
     'enroll' => 'Enroll',
     'enrolled' => 'Enrolled',
@@ -245,6 +251,8 @@ return  [
     'primary_address' => 'Primary address',
     'principal_menu' => 'Principal Menu',
     'print' => 'Print',
+    'print_to_pdf' => 'Print to PDF',
+
     'profile_image_set' => 'Profile image set successfully',
     'profile_image' => 'Profile Image',
     'profile_update_failure' => 'Profile update failed',
@@ -261,11 +269,18 @@ return  [
     'register_success' => 'Account created successfully!',
     'register' => 'Register',
     'registration_demand' => 'Registration Demand',
+    'regarding_the_student' => 'Regarding the student',
     'registration_demandes' => 'Registration Demands',
     'rejected' => 'Rejected',
     'remember_me' => 'Remember Me',
     'remove_image' => 'Remove Image',
     'report' => 'Report',
+    'report_body_intro_acts' => 'I inform you, Mr. General Supervisor, that the aforementioned student has committed the following acts',
+    'report_body_proposed_action_intro' => 'Therefore, and to ensure the normal flow of lessons, I suggest the following action',
+    'report_footer_greeting' => 'Kind regards',
+    'report_signature' => 'Signature',
+    'report_footer_conclusion' => 'And you, sir, may take any additional measure authorized by law that you see fit to curb this behavior.',
+    'report_subject_title' => 'Subject: Report',
     'reset_password' => 'Reset Password',
     'reset' => 'Reset',
     'role_exist' => 'This role is already assigned to the user.',
@@ -325,6 +340,7 @@ return  [
     'time_quotas' => 'Time Quotas',
     'to_asc' => 'To ASC',
     'to_date' => 'To Date',
+    'to_change_status' => 'to change the report status.',
     'to' => 'To',
     'total_absences' => 'Total Absences',
     'try_again' => 'Please try again',
@@ -430,6 +446,9 @@ return  [
     'academic_start_date' => 'Academic Start Date',
     'academic_end_date' => 'Academic End Date',
 
+    'system_settings' => 'System Settings',
+    'enable_automatic_attendance_processing' => 'Enable Automatic Attendance Processing',
+
     'misconduct_management' => 'Misconduct Management',
     'misconduct_act' => 'Misconduct Act',
     'misconduct_acts' => 'Misconduct Acts',
@@ -458,4 +477,36 @@ return  [
 
     'misconduct_reports' => 'Misconduct Reports',
     'misconduct_report' => 'Misconduct Report',
+
+    'draft' => 'Draft',
+    'submitted' => 'Submitted',
+    'reviewed' => 'Reviewed',
+    'archived' => 'Archived',
+
+    'other_acts' => 'Other acts',
+    'other_propositions' => 'Other propositions',
+
+    'misconduct_report_created' => 'Misconduct report created successfully',
+    'error_creating_misconduct_report' => 'Error creating misconduct report',
+    'error_updating_misconduct_report' => 'Error updating misconduct report',
+    'error_deleting_misconduct_report' => 'Error deleting misconduct report',
+    'misconduct_report_updated' => 'Misconduct report updated successfully',
+    'misconduct_report_deleted' => 'Misconduct report deleted successfully',
+
+    'logo_path' => 'Logo path (URL)',
+    
+    'select_room'=>'Select a Room',
+    'no_room_available' => 'No rooms available to display.',
+    'please_select_room' => 'Please select a room to display the attendance dashboard.',
+    'no_attendance_data' => 'No attendance data available for the selected room.',
+    'terminal_mode' => 'Terminal Mode',
+
+    'next_seance_found' => 'Next seance found',
+    'no_more_seance' => 'No more seances in this room today',
+    'qr_scanner_load_error' => 'QR Scanner library failed to load. Please try again.',
+
+    'take_image' => 'Take Image',
+    'capture' => 'Capture',
+    'retake' => 'Retake',
+    'take_image_description' => 'Take a photo from the webcam and save it as your profile image.',
 ];

@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Models\AbsenceModel;
 use Illuminate\Http\Request;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Session;
 
 /**
@@ -24,7 +25,7 @@ use Illuminate\Support\Facades\Session;
  */
 class Classe extends AbsenceModel
 {
-    use SoftDeletes;
+    
 
     protected $table = 'Classe';
 
@@ -39,6 +40,26 @@ class Classe extends AbsenceModel
         'userId',
         'imageId',
     ];
+
+    protected static function booted()
+    {
+        parent::boot();
+
+        static::deleting(function ($classe) {
+            // Use a transaction to ensure data integrity
+            DB::transaction(function () use ($classe) {
+                // Use the collection property `$classe->students` to use `each->delete()`
+                // This will trigger the 'deleting' event on each Student model.
+                $classe->students->each->delete();
+                // This will trigger the 'deleting' event on each Seance model.
+                $classe->seances->each->delete();
+
+                $classe->classeImages()->delete();
+                $classe->enrollments()->delete();
+            });
+        });
+    }
+
     public function scopeFilter($query, Request $request)
     {
 
@@ -84,6 +105,11 @@ class Classe extends AbsenceModel
     public function classeImages()
     {
         return $this->hasMany(ClasseImage::class, 'classeId');
+    }
+
+    public function enrollments()
+    {
+        return $this->hasMany(Enrollment::class, 'classeId');
     }
 
     public function classeName()

@@ -5,18 +5,117 @@ namespace App\Http\Controllers\Api\V1;
 use Exception;
 use App\Models\Attendance;
 use App\Models\Absence;
+use App\Models\Seance;
 use App\Models\Student;
 use App\Models\AttendanceStudent;
 use Illuminate\Http\Request;
 use App\Models\AbsenceStudent;
 use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
+use App\Services\MqttNotificationService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use Carbon\Carbon;
 
 class AttendanceController extends Controller
 {
+
+    protected MqttNotificationService $mqttNotificationService;
+
+    public function __construct(MqttNotificationService $mqttNotificationService)
+    {
+        $this->mqttNotificationService = $mqttNotificationService;
+    }
+
+    protected function shouldConvertToAbsenceNow(Seance $seance, ?string $timestamp = null): bool
+    {
+        $reference = $timestamp ? Carbon::parse($timestamp) : now();
+
+        return $reference->format('H:i:s') >= Carbon::parse($seance->a)->format('H:i:s');
+    }
+
+    protected function publishAttendanceUpdatedEvent(Seance $seance, array $absentStudentIds): void
+    {
+        $topic = 'attendance/updated/' . ($seance->salle ?: 'unknown');
+
+        $this->mqttNotificationService->publish($topic, [
+            'event' => 'attendance_updated',
+            'seance_id' => $seance->id,
+            'salle' => $seance->salle,
+            'absent_student_ids' => array_values($absentStudentIds),
+            'updated_at' => now()->toDateTimeString(),
+        ]);
+    }
+
+    public function submitForSeance(Request $request, Seance $seance)
+    {
+        if (!Auth::check() || Auth::id() !== $seance->teacherId) {
+            return response()->json(['message' => __('vocab.not_authorized')], 403);
+        }
+
+        $validatedData = $request->validate([
+            'absent_student_ids' => ['required', 'array'],
+            'absent_student_ids.*' => ['string'],
+            'timestamp' => ['nullable', 'date'],
+        ]);
+
+        $classStudentIds = Student::where('classeId', $seance->classeId)->pluck('id')->all();
+        $classStudentIdMap = array_fill_keys($classStudentIds, true);
+
+        $absentStudentIds = array_values(array_filter(
+            array_unique($validatedData['absent_student_ids']),
+            fn($studentId) => isset($classStudentIdMap[$studentId])
+        ));
+
+        try {
+            $attendance = DB::transaction(function () use ($seance, $absentStudentIds) {
+                $attendance = Attendance::firstOrCreate(['seanceId' => $seance->id]);
+                $attendance->attendanceStudents()->delete();
+
+                if (!empty($absentStudentIds)) {
+                    $plage = $seance->plageInMinutes();
+                    $now = now();
+
+                    $rows = array_map(function ($studentId) use ($attendance, $plage, $now) {
+                        return [
+                            'id' => (string) Str::uuid(),
+                            'attendanceId' => $attendance->id,
+                            'studentId' => $studentId,
+                            'plage' => $plage,
+                            'created_at' => $now,
+                            'updated_at' => $now,
+                        ];
+                    }, $absentStudentIds);
+
+                    AttendanceStudent::insert($rows);
+                }
+
+                return $attendance;
+            });
+
+            $attendance->refresh();
+
+            if ($this->shouldConvertToAbsenceNow($seance, $validatedData['timestamp'] ?? null)) {
+                $this->attendanceToAbsence($attendance);
+            }
+
+            $this->publishAttendanceUpdatedEvent($seance, $absentStudentIds);
+
+            return response()->json([
+                'message' => __('vocab.action_success'),
+                'seance_id' => $seance->id,
+                'attendance_id' => $attendance->id,
+                'absent_student_ids' => $absentStudentIds,
+            ], 200);
+        } catch (Exception $exception) {
+            Log::error('Failed to submit seance attendance: ' . $exception->getMessage());
+
+            return response()->json([
+                'message' => __('vocab.action_failure') . ' ' . __('vocab.try_again'),
+            ], 500);
+        }
+    }
 
     public function clear(Attendance $attendance)
     {
@@ -28,32 +127,47 @@ class AttendanceController extends Controller
         if (auth()->user()->id !== $attendance->seance->teacherId) {
             return response()->json(['message' => __('vocab.not_authorized')], 403);
         }
-        DB::transaction(function () use ($attendance) {
-            $attendance->attendanceStudents()->delete();
-            // to allow generate new id for attendance
-            $attendance->delete();
-        });
+        // to allow generate new id for attendance
+        $attendance->delete();
 
         return response()->json(['message' => __('vocab.delete_success')], 200);
     }
 
     public function attendanceToAbsence(Attendance $attendance)
     {
+        // 1. Authorization Check (No change needed - this is correct)
         if (!Auth::check() || auth()->user()->id !== $attendance->seance->teacherId) {
             return response()->json(['message' => __('vocab.not_authorized')], 403);
         }
 
-        try {
-            DB::transaction(function () use ($attendance) {
+        // Get the related students *once*
+        $attendanceStudents = $attendance->attendanceStudents;
 
-                // 1. Create the Absence record
+        // 2. NEW: Check if there are students to process (AttendanceStudents > 0)
+        if ($attendanceStudents->isEmpty()) {
+            // Logically, if the attendance is empty, there's nothing to convert to absence.
+            // We can still clean up the parent Attendance record if desired, but 
+            // the core transaction for moving data should be skipped.
+
+            // OPTION A: Simply delete the empty Attendance record and return success.
+            $attendance->delete();
+            return response()->json(['message' => __('vocab.action_success') . ' (Empty attendance record deleted)'], 200);
+
+            // OPTION B: Return success without deleting, assuming the calling job handles clean up.
+            // return response()->json(['message' => __('vocab.action_success') . ' (No students to process)'], 200);
+        }
+
+        try {
+            DB::transaction(function () use ($attendance, $attendanceStudents) {
+
+                // 1. Create the Absence record (New parent record)
                 $absence = Absence::create([
                     'seanceId' => $attendance->seanceId,
                     'created_at' => $attendance->created_at
                 ]);
 
-                // 2. Prepare bulk insert data for AbsenceStudent
-                $bulkInsert = $attendance->attendanceStudents->map(function ($a) use ($absence) {
+                // 2. Prepare bulk insert data for AbsenceStudent (Mapping from AttendanceStudent)
+                $bulkInsert = $attendanceStudents->map(function ($a) use ($absence) {
                     return [
                         'id' => Str::uuid(),
                         'studentId' => $a->studentId,
@@ -61,22 +175,26 @@ class AttendanceController extends Controller
                         'plage' => $a->plage,
                         'justification' => $a->justification,
                         'created_at' => $a->created_at,
-                        'updated_at' => now(), // required if your table uses timestamps
+                        'updated_at' => now(),
                     ];
                 })->toArray();
 
                 // 3. Bulk insert into absence_students
                 AbsenceStudent::insert($bulkInsert);
 
-                // 4. Delete all attendanceStudents in a single query
+                // 4. Delete all attendanceStudents in a single query (Cleanup child records)
+                // Use the loaded collection to avoid a second query if possible, 
+                // but deleting via the relationship is cleaner.
                 $attendance->attendanceStudents()->delete();
 
-                // 5. Delete the attendance record itself
+                // 5. Delete the attendance record itself (Cleanup parent record)
                 $attendance->delete();
             });
 
             return response()->json(['message' => __('vocab.action_success')], 200);
         } catch (Exception $e) {
+            // Log the error for debugging
+            Log::error("Failed to convert Attendance to Absence: {$e->getMessage()}");
             return response()->json(['message' => __('vocab.action_failed') . ': ' . $e->getMessage()], 403);
         }
     }
@@ -114,6 +232,11 @@ class AttendanceController extends Controller
 
             // 7. Check if a record was actually deleted.
             if ($deletedCount > 0) {
+                // if attendance list is emptied after deletion, delete attendance record
+                if ($attendance->attendanceStudents()->count() === 0) {
+                    $attendance->delete();
+                    return response()->json(['message' => __('vocab.delete_success')], 201);
+                }
                 return response()->json(['message' => __('vocab.delete_success')], 200);
             } else {
                 // A record was not found to be deleted.
@@ -140,8 +263,14 @@ class AttendanceController extends Controller
             return response()->json(['message' => __('vocab.not_authorized')], 403);
         }
 
-        if ($attendance_student->delete())
+        if ($attendance_student->delete()) {
+            // if attendance list is emptied after deletion, delete attendance record
+            if ($attendance_student->attendance->attendanceStudents()->count() === 0) {
+                $attendance_student->attendance->delete();
+                return response()->json(['message' => __('vocab.delete_success')], 201);
+            }
             return response()->json(['message' => __('vocab.delete_success')], 200);
+        }
 
         return response()->json(['message' => __('vocab.delete_failed')], 404);
     }
@@ -247,10 +376,13 @@ class AttendanceController extends Controller
     public function refreshAttendance(Attendance $attendance)
     {
 
+        // If the attendance has no students, ensure an attendance record exists for the seance.
+        // This will create one if it was deleted, or just return the existing empty one.
+        if ($attendance->attendanceStudents()->doesntExist()) {
+            return Attendance::firstOrCreate(['seanceId' => $attendance->seanceId]);
+        }
 
-        //return Attendance::where('id',$attendance->id)->first(); //or
-        return $attendance->fresh('attendanceStudents'); // reload relation
-
-
+        // Otherwise, return the attendance with a fresh list of students.
+        return $attendance->fresh('attendanceStudents');
     }
 }

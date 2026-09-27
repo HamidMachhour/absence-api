@@ -18,6 +18,7 @@ return [
 
     'absence_justify' => 'تبرير الغياب',
     'absence_justified' => 'الغياب مبرر',
+    'absence_not_justified' => 'الغياب غير مبرر',
     'absence_not_found' => 'الغياب غير موجود',
     'absence_not_updated' => 'لم يتم تحديث الغياب',
 
@@ -78,6 +79,10 @@ return [
 
 
     'classes_added' => ' تمت إضافة الأقسام بنجاح!',
+
+    'classe_emptied_success' => 'تم إفراغ القسم بنجاح!',
+    'classe_emptied_failure' => 'فشل في إفراغ القسم',
+
     'classes' => 'الأقسام',
     'clear' => 'مسح',
     'code' => 'رمز مهني',
@@ -128,8 +133,9 @@ return [
     'email_address' => 'عنوان البريد الإلكتروني',
     'email_not_verified' => 'البريد الإلكتروني غير محقق',
     'email' => 'البريد الإلكتروني',
+    'empty' => 'إفراغ',
     'empty_list' => 'إفراغ القائمة',
-    'empty' => 'غير متوفر',
+    'no_data' => 'غير متوفر',
     'enable' => 'تفعيل',
     'enroll' => 'تسجيل',
     'enrolled' => 'مسجل',
@@ -242,6 +248,8 @@ return [
     'primary_address' => 'عنوان رئيسي',
     'principal_menu' => 'الرئيسية',
     'print' => 'طباعة',
+    'print_to_pdf' => 'طباعة إلى PDF',
+
     'profile_image_set' => 'تم تعيين صورة الملف الشخصي بنجاح',
     'profile_image' => 'صورة الملف الشخصي',
     'profile_update_failure' => 'فشل تحديث الملف الشخصي',
@@ -257,11 +265,19 @@ return [
     'register_success' => 'تم إنشاء الحساب بنجاح!',
     'register' => 'تسجيل',
     'registration_demand' => 'طلب التسجيل',
+    'regarding_the_student' => 'في شأن التلميذ',
     'registration_demandes' => 'طلبات التسجيل',
     'rejected' => 'مرفوض',
     'remember_me' => 'تذكرني',
     'remove_image' => 'إزالة الصورة',
     'report' => 'تقرير',
+    'report_body_intro_acts' => 'اخبركم سيدي الحارس العام أن التلميذ المذكور أعلاه قد صدرت منه الأفعال التالية',
+    'report_body_proposed_action_intro' => 'ومنه وضمانا للسير العادي للدروس اقترح عليكم الإجراء التالي',
+    'report_footer_greeting' => 'والسلام',
+    'report_signature' => 'الامضاء',
+    'report_footer_conclusion' => 'ولكم سيدي أن تتخذوا أي اجراء اضافي و يخوله لكم القانون و ترونه مناسبا للحد من هذا السلوك.',
+    'report_subject_title' => 'الموضوع: تقرير',
+
     'reset_password' => 'إعادة تعيين كلمة المرور',
     'reset' => 'إعادة تعيين',
     'role_exist' => 'تم تعيين هذا الدور للمستخدم بالفعل.',
@@ -425,6 +441,9 @@ return [
     'academic_start_date' => 'تاريخ بداية السنة الدراسية',
     'academic_end_date' => 'تاريخ نهاية السنة الدراسية',
 
+    'system_settings' => 'إعدادات النظام',
+    'enable_automatic_attendance_processing' => 'تفعيل معالجة الحضور التلقائية',
+
     'misconduct_management' => 'إدارة السلوكات المخالفة',
     'misconduct_act' => 'نوع السلوك المخالف',
     'misconduct_acts' => 'أنواع السلوك المخالف',
@@ -452,4 +471,36 @@ return [
 
     'misconduct_reports' => 'تقارير سوء السلوك',
     'misconduct_report' => 'تقرير سوء السلوك',
+
+    'draft' => 'مسودة',
+    'submitted' => 'مقدم',
+    'reviewed' => 'مراجَع',
+    'archived' => 'مؤرشف',
+
+    'to_change_status' => 'لتغيير حالة التقرير.',
+    'other_acts'       => 'أخطاء أخرى',
+    'other_propositions' => 'مقترحات أخرى',
+
+    'misconduct_report_created' => 'تم إنشاء تقرير سوء السلوك بنجاح',
+    'error_creating_misconduct_report' => 'خطأ في إنشاء تقرير سوء السلوك',
+    'error_updating_misconduct_report' => 'خطأ في تحديث تقرير سوء السلوك',
+    'error_deleting_misconduct_report' => 'خطأ في حذف تقرير سوء السلوك',
+    'misconduct_report_updated' => 'تم تحديث تقرير سوء السلوك بنجاح',
+    'misconduct_report_deleted' => 'تم حذف تقرير سوء السلوك بنجاح',
+    'logo_path' => 'مسار الشعار (رابط URL)',
+
+    'select_room'=>'اختر قاعة',
+    'no_room_available' => 'لا توجد قاعات متاحة للعرض.',
+    'please_select_room' => 'يرجى اختيار قاعة لعرض لوحة معلومات الحضور.',
+    'no_attendance_data' => 'لا توجد بيانات حضور متاحة لهذه القاعة في الوقت الحالي.',
+    'terminal_mode' => 'وضع المحطة',
+
+    'next_seance_found' => 'تم العثور على الحصة التالية',
+    'no_more_seance' => 'لا يوجد المزيد من الحصص في هذه القاعة اليوم',
+    'qr_scanner_load_error' => 'فشل تحميل مكتبة ماسح رمز الاستجابة السريعة. يرجى المحاولة مرة أخرى.',
+    
+    'take_image' => 'التقاط صورة',
+    'capture' => 'التقاط',
+    'retake' => 'إعادة التقاط',
+    'take_image_description' => 'التقط صورة من كاميرا الويب واحفظها كصورة ملفك الشخصي.',
 ];

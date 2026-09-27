@@ -16,7 +16,7 @@
 
 @if (auth()->user()->hasRole('admin'))
 
-<div class="d-flex justify-content-end mb-2">
+<div class="d-flex justify-content-end m-2 card-body">
 
     <form action="{{ route('subjects.destroyAll') }}" method="POST" class="mr-2">
         @csrf
@@ -48,7 +48,7 @@
             <x-subject-row :subject="$subject" />
             @empty
             <tr>
-                <td colspan="3">{{ __('vocab.empty') }}</td>
+                <td colspan="3">{{ __('vocab.no_data') }}</td>
             </tr>
             @endforelse
         </tbody>

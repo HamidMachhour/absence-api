@@ -16,7 +16,7 @@
 @endsection
 
 @section('content')
-<form method="GET" class="pb-4 btn-group gap-2 flex justify-center">
+<form method="GET" class="pb-4 btn-group gap-2 flex justify-center {{ App::getLocale() == 'ar' ? 'flex-row-reverse' : 'flex-row' }}">
 
     <div class="form-group">
         <select name="sort" class="form-control" onchange="this.form.submit()">
@@ -36,7 +36,7 @@
             <option value=""> {{__('vocab.class')}}
             </option>
             @foreach ($classes as $class)
-            <option value="{{$class->id}}" {{ request()->get('classeId') === $class->id ? 'selected' : '' }}>{{ $class->name}}</option>
+            <option value="{{$class->id}}" {{ request()->get('classeId') === $class->id ? 'selected' : '' }}>{{ $class->classeName()}}</option>
             @endforeach
         </select>
     </div>
@@ -141,7 +141,7 @@
         {{ $seances->appends(request()->query->all())->links() }}
     </div>
     @else
-    <p>{{__('vocab.empty')}}</p>
+    <p>{{__('vocab.no_data')}}</p>
     @endunless
 </div>
 

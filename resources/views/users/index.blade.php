@@ -23,7 +23,7 @@
 
 @section('content')
 {{-- Filters Form --}}
-<form method="GET" class="pb-4 btn-group gap-2 flex justify-center">
+<form method="GET" class="pb-4 btn-group gap-2 d-flex justify-center {{ App::getLocale() == 'ar' ? 'flex-row-reverse' : 'flex-row' }}">
     <div class="form-group btn-lg">
         <select name="sort" class="form-control" onchange="this.form.submit()">
             <option value=""> {{__('vocab.sort_by')}}
@@ -120,7 +120,7 @@
     {{ $users->appends(request()->query->all())->links() }}
 </div>
 @else
-<p>{{__('vocab.empty')}}</p>
+<p>{{__('vocab.no_data')}}</p>
 @endunless
 @endsection
 

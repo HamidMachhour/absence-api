@@ -14,7 +14,7 @@
             <input hidden id="classe" value="{{ $student->classeId }}" />
             <input hidden id="student" value="{{ $student->id }}" />
             @endif
-            <button type="button" class="btn btn-success" id="btn_filter" name="btn_filter">
+            <button type="button" class="btn btn-success" id="btn_chart_filter" name="btn_chart_filter">
                 <i class="fas fa-filter"></i>
             </button>
         </div>

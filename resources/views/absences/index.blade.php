@@ -18,7 +18,7 @@
 @section('content')
     @unless ($totalCount == 0)
         <div class="card mx-3">
-            <div class="card-header">
+            <div class="card-header d-flex gap-2  {{ App::getLocale() == 'ar' ? 'flex-row-reverse' : 'flex-row' }}">
                 <div class=" h4">{{__('vocab.number')}}: {{ $absences->count() }}</div>
                 <x-filters-card :params="$params" />
             </div>
@@ -34,7 +34,7 @@
             </div>
         </div>
     @else
-        <p>{{__('vocab.empty')}}</p>
+        <p>{{__('vocab.no_data')}}</p>
     @endunless
 
 @endsection

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\V1;
 
 use Exception;
 use App\Models\Seance;
+use App\Models\Student;
 use League\Csv\Reader;
 use League\Csv\Writer;
 use SplTempFileObject;
@@ -44,7 +45,7 @@ class SeanceController extends Controller
                 ->latest()
                 ->paginate($page_size);
         } catch (Exception $e) {
-            return response()->json(['message' => __('vocab.empty') . $e->getMessage()], 404);
+            return response()->json(['message' => __('vocab.no_data') . $e->getMessage()], 404);
         }
     }
 
@@ -69,7 +70,7 @@ class SeanceController extends Controller
 
             return $this->index($request);
         } catch (Exception $e) {
-            return response()->json(['message' => __('vocab.empty') . $e->getMessage()], 404);
+            return response()->json(['message' => __('vocab.no_data') . $e->getMessage()], 404);
         }
     }
 
@@ -257,7 +258,7 @@ class SeanceController extends Controller
         }
 
         // Soft delete all seances by updating the deleted_at timestamp
-        Seance::filter($request)->update(['deleted_at' => now()]);
+        Seance::filter($request)->get()->each->delete();
 
         // Return a response
         return response()->json(['message' => __('vocab.delete_success')], 200);
@@ -307,7 +308,7 @@ class SeanceController extends Controller
 
             return Response::make($csv->toString(), 200, $headers);
         } catch (Exception $e) {
-            return response()->json(['message' => __('vocab.empty') . $e->getMessage()], 404);
+            return response()->json(['message' => __('vocab.no_data') . $e->getMessage()], 404);
         }
     }
 
@@ -392,5 +393,42 @@ class SeanceController extends Controller
                 'message' => __('vocab.action_failure') . $e->getMessage()
             ], 404);
         }
+    }
+
+    public function roster(Seance $seance)
+    {
+        if (!Auth::check()) {
+            return response()->json(['message' => __('vocab.not_authorized')], 403);
+        }
+
+        if (Auth::id() !== $seance->teacherId) {
+            return response()->json(['message' => __('vocab.not_authorized')], 403);
+        }
+
+        $seance->loadMissing(['classe', 'subject']);
+
+        $students = Student::where('classeId', $seance->classeId)
+            ->with(['user.userImage'])
+            ->orderBy('num')
+            ->get()
+            ->map(function (Student $student) {
+                $user = $student->user;
+
+                return [
+                    'id' => $student->id,
+                    'num' => $student->num,
+                    'name' => trim(($user?->firstNameEn ?? $user?->firstName ?? '') . ' ' . ($user?->lastNameEn ?? $user?->lastName ?? '')),
+                    'photo_url' => $user?->userImage?->uri,
+                ];
+            })
+            ->values();
+
+        return response()->json([
+            'seance_id' => $seance->id,
+            'classe_name' => $seance->classe?->nameEn ?? $seance->classe?->name,
+            'subject' => $seance->subject?->nameEn ?? $seance->subject?->name,
+            'salle' => $seance->salle,
+            'students' => $students,
+        ], 200);
     }
 }

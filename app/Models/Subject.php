@@ -9,6 +9,7 @@ namespace App\Models;
 use DateTime;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Class Subject
@@ -31,6 +32,27 @@ class Subject extends AbsenceModel
 		'nameEn',
 		'nameZ'
 	];
+
+	protected static function booted()
+    {
+        parent::boot();
+
+        static::deleting(function ($subject) {
+            // Use a transaction to ensure data integrity
+            DB::transaction(function () use ($subject) {
+                // This will trigger the 'deleting' event on each Seance model,
+                // which in turn will cascade to Absences and AbsenceStudents.
+                $subject->seances()->each(function ($seance) {
+                    $seance->delete();
+                });
+            });
+        });
+    }
+
+	public function seances()
+    {
+        return $this->hasMany(Seance::class, 'subjectId');
+    }
 
 	public function subjectName()
 	{

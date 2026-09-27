@@ -5,22 +5,21 @@ namespace App\Http\Controllers\Api\V1;
 use Exception;
 use App\Models\User;
 use App\Models\Classe;
-use App\Models\Seance;
 use League\Csv\Reader;
 use League\Csv\Writer;
 use SplTempFileObject;
 
 use App\Models\Student;
-use App\Models\ClasseImage;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
-use App\Models\Enrollment;
 use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Response;
+use App\Models\Role;
+use App\Models\UserRole;
 
 class ClasseController extends Controller
 {
@@ -35,7 +34,7 @@ class ClasseController extends Controller
         if (!Auth::check()) {
             return response()->json(['message' => __('vocab.not_authorized')], 403);
         }
-        
+
         try {
             if ($request->filled("page_size"))
                 $page_size = $request->input("page_size");
@@ -46,7 +45,7 @@ class ClasseController extends Controller
                 ->with('classeImages')
                 ->paginate($page_size);
         } catch (Exception $e) {
-            return response()->json(['message' => __('vocab.empty') . $e->getMessage()], 404);
+            return response()->json(['message' => __('vocab.no_data') . $e->getMessage()], 404);
         }
     }
 
@@ -70,9 +69,10 @@ class ClasseController extends Controller
                 ->where('userId', Auth::user()->id)
                 ->with('classeImage')
                 ->with('classeImages')
+                ->with('user')
                 ->paginate($page_size);
         } catch (Exception $e) {
-            return response()->json(['message' => __('vocab.empty') . $e->getMessage()], 404);
+            return response()->json(['message' => __('vocab.no_data') . $e->getMessage()], 404);
         }
     }
 
@@ -166,19 +166,36 @@ class ClasseController extends Controller
         }
         // Soft delete
         DB::transaction(function () use ($classe) {
-            /* ClasseImage::where('classeId',$classe->id)->delete();
-            Seance::where('classeId',$classe->id)->delete();
-            Student::where('classeId',$classe->id)->delete(); */
-            Enrollment::where('classeId', $classe->id)->delete();
-            $classe->classeImages()->delete();
-            $classe->students()->delete();
-            $classe->seances()->delete();
             $classe->delete();
         });
         // Return a response
         return response()->json(['message' => __('vocab.delete_success')], 200);
     }
 
+    /*  Empty the specified classe of all its students.
+     *
+     */
+    public function emptyClasse(Classe $classe)
+    {
+        if (!Auth::check()) {
+            return response()->json(['message' => __('vocab.not_authorized')], 403);
+        }
+        if (Auth::user()->id !== $classe->userId && !Auth::user()->hasRole('admin')) {
+            return response()->json(['message' => __('vocab.not_authorized')], 403);
+        }
+        try {
+            $classe->students()->delete();
+            return response()->json(['message' => __('vocab.classe_emptied_success')], 200);
+        } catch (Exception $e) {
+            return response()->json(['message' => __('vocab.classe_emptied_failure') . ' ' . $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Export students of a classe to CSV.
+     *
+     * @param Classe $classe
+     */
     public function export(Classe $classe)
     {
         try {
@@ -258,47 +275,63 @@ class ClasseController extends Controller
 
             foreach ($csv->getRecords() as $record) {
                 try {
-                    // First create or find user
-                    $user = User::firstOrCreate(
-                        ['email' => $record['email']],
-                        [
-                            'password' => $record['password'] ?? Hash::make('password'),
-                            'firstName' => $record['first_name'],
-                            'lastName' => $record['last_name'],
-                            'firstNameFr' => $record['first_name_fr'],
-                            'lastNameFr' => $record['last_name_fr'],
-                            'firstNameEn' => $record['first_name_en'],
-                            'lastNameEn' => $record['last_name_en'],
-                            'firstNameZ' => $record['first_name_z'],
-                            'lastNameZ' => $record['last_name_z'],
-                            'code' => $record['code'] ?? rand(10000, 100000),
-                            'tag_id' => $record['tag_id'] ?? rand(10000, 100000),
-                        ]
-                    );
+                    DB::transaction(function () use ($record, $classe, &$csv_summary, &$added, &$updated, &$failed) {
+                        // 1. Find or create the User
+                        $roleName = $record['role'] ?? 'student';
+                        $_role = Role::where('nameEn', $roleName)->latest()->first();
 
-                    $studentData = [
-                        'num' => $record['num'],
-                        'userId' => $user->id,
-                        'classeId' => $classe->id
-                    ];
+                        if (!$_role) {
+                            throw new Exception("Role '{$roleName}' not found for record.");
+                        }
 
-                    // Try to update existing student
-                    if (isset($record['id'])) {
-                        $student = Student::where('classeId', $classe->id)
-                            ->find($record['id']);
+                        $user = User::updateOrCreate(
+                            ['email' => $record['email']],
+                            [
+                                'password' => Hash::make($record['password'] ?? 'password'),
+                                'firstName' => $record['first_name'] ?? $record['firstName'],
+                                'lastName' => $record['last_name'] ?? $record['lastName'],
+                                'firstNameFr' => $record['first_name_fr'] ?? $record['firstNameFr'] ?? null,
+                                'lastNameFr' => $record['last_name_fr'] ?? $record['lastNameFr'] ?? null,
+                                'firstNameEn' => $record['first_name_en'] ?? $record['firstNameEn'] ?? null,
+                                'lastNameEn' => $record['last_name_en'] ?? $record['lastNameEn'] ?? null,
+                                'firstNameZ' => $record['first_name_z'] ?? $record['firstNameZ'] ?? null,
+                                'lastNameZ' => $record['last_name_z'] ?? $record['lastNameZ'] ?? null,
+                                'code' => $record['code'] ?? rand(10000, 100000),
+                                'tag_id' => $record['tag_id'] ?? rand(10000, 100000),
+                                'email_verified_at' => now(),
+                            ]
+                        );
+
+                        // 2. Assign the role to the user if it doesn't exist
+                        UserRole::firstOrCreate(
+                            ['userId' => $user->id, 'roleId' => $_role->id]
+                        );
+
+                        // 3. Prepare student data
+                        $studentData = [
+                            'num' => $record['num'],
+                            'userId' => $user->id,
+                            'classeId' => $classe->id
+                        ];
+
+                        // 4. Find or create the Student record
+                        // This is more robust than checking for $record['id']
+                        $student = Student::where('userId', $user->id)
+                                          ->where('classeId', $classe->id)
+                                          ->first();
 
                         if ($student) {
+                            // Student for this user already exists in this class, update it
                             $student->update($studentData);
                             $csv_summary->insertOne(['update', $student->id, 'updated']);
                             $updated++;
-                            continue;
+                        } else {
+                            // No student for this user in this class, create a new one
+                            $student = Student::create($studentData);
+                            $csv_summary->insertOne(['new', $student->id, 'added']);
+                            $added++;
                         }
-                    }
-
-                    // Create new student if update failed or no ID provided
-                    $student = Student::create($studentData);
-                    $csv_summary->insertOne([($record['id'] ?? 'new'), $student->id, 'added']);
-                    $added++;
+                    });
                 } catch (Exception $e) {
 
                     $csv_summary->insertOne(['error', $e->getMessage(), 'failed']);
@@ -476,10 +509,14 @@ class ClasseController extends Controller
             return response()->json(['message' => __('vocab.not_authorized')], 403);
         }
 
-        // Soft delete all seances by updating the deleted_at timestamp
-        Classe::filter($request)->update(['deleted_at' => now()]);
-
-        // Return a response
-        return response()->json(['message' => __('vocab.delete_success')], 200);
+        try {
+            DB::transaction(function () use ($request) {
+                $classes = Classe::filter($request)->get();
+                $classes->each->delete(); // This will trigger the 'deleting' event on each model
+            });
+            return response()->json(['message' => __('vocab.delete_success')], 200);
+        } catch (Exception $e) {
+            return response()->json(['message' => __('vocab.delete_failure') . ' ' . $e->getMessage()], 500);
+        }
     }
 }

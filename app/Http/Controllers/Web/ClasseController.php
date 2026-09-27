@@ -171,6 +171,23 @@ class ClasseController extends Controller
         return view('classes.edit', ['classe' => $classe, 'addresses' => Auth::user()->addresses]);
     }
 
+    // empty classe
+    public function emptyClasse(Classe $classe, V1ClasseController $controller)
+    {
+        if (!Auth::user()->hasRole('admin') && Auth::user()->id !== $classe->userId) {
+            return redirect()->route('home')->with('message',  __('vocab.not_authorized'));
+        }
+        $response = $controller->emptyClasse($classe);
+        $status_code = $response->getStatusCode();
+        $responseContent = $response->content();
+        $data = json_decode($responseContent, true); // true to convert to an associative array
+        if ($status_code === 200) {
+            $message = isset($data['message']) ? $data['message'] : __('vocab.action_success');
+        } else {
+            $message = isset($data['message']) ? $data['message'] : __('vocab.action_failure');
+        }
+        return redirect()->route('classes.manage', ['classe' => $classe])->with('message', $message);
+    }
     // Update store Data
     public function update(Request $request, Classe $classe)
     {
@@ -214,6 +231,7 @@ class ClasseController extends Controller
         }
         return redirect()->route('classes.manage')->with('message', $message);
     }
+
 
 
     public function export(Classe $classe)

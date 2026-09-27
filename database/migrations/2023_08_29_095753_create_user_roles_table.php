@@ -18,7 +18,7 @@ return new class extends Migration
             $table->string('userId',255);
             $table->unsignedBigInteger('roleId');
             $table->text('role_status')->nullable();
-            $table->text('deleted_at')->nullable();
+             $table->timestamp('deleted_at')->nullable();;
             $table->timestamps();
         });
     }

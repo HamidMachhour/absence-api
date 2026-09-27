@@ -1,207 +1,124 @@
-// Function to generate an array of colors
+/**
+ * Generates an array of RGBA colors.
+ * @param {number} length The number of colors to generate.
+ * @returns {Array<Object>} An array of objects, each with backgroundColor and borderColor.
+ */
 function generateColors(length) {
-    var colors = [];
-    for (var i = 0; i < length; i++) {
+    const colors = [];
+    for (let i = 0; i < length; i++) {
         // Generate random RGB values
-        var r = Math.floor(Math.random() * 256);
-        var g = Math.floor(Math.random() * 256);
-        var b = Math.floor(Math.random() * 256);
+        const r = Math.floor(Math.random() * 256);
+        const g = Math.floor(Math.random() * 256);
+        const b = Math.floor(Math.random() * 256);
         // Construct RGBA string with a low opacity
-        var color = 'rgba(' + r + ', ' + g + ', ' + b + ', 0.2)';
-        colors.push(color);
+        colors.push({
+            backgroundColor: `rgba(${r}, ${g}, ${b}, 0.2)`,
+            borderColor: `rgba(${r}, ${g}, ${b}, 1)`
+        });
     }
     return colors;
 }
 
-function reduceAbsenceDataByDate(absenceData) {
-    // Initialize an empty dictionary to store reduced values
-    var reducedValuesByDate = {};
+/**
+ * Creates or updates a chart.
+ * @param {string} chartId The ID of the canvas element.
+ * @param {Chart} chartInstance The existing chart instance (can be null).
+ * @param {string} type The chart type (e.g., 'line', 'bar', 'pie').
+ * @param {Array<string>} labels The labels for the chart.
+ * @param {Array<Object>} datasets The datasets for the chart.
+ * @param {Object} [options={}] Additional chart options.
+ * @returns {Chart} The new or updated chart instance.
+ */
+function createOrUpdateChart(chartId, chartInstance, type, labels, datasets, options = {}) {
+    if (chartInstance) {
+        chartInstance.destroy();
+    }
+    const ctx = document.getElementById(chartId).getContext('2d');
+    return new Chart(ctx, {
+        type: type,
+        data: {
+            labels: labels,
+            datasets: datasets
+        },
+        options: options
+    });
+}
 
-    // Loop through each item in absenceData
-    absenceData.forEach(function (currentValue) {
-        // If the date doesn't exist in the reducedValuesByDate dictionary, initialize it with all zeros
-        if (!reducedValuesByDate[currentValue.date]) {
-            reducedValuesByDate[currentValue.date] = {
-                nb_absences: 0,
-                justifie: 0,
-                non_justifie: 0,
-                sum_plages:0
-            };
+/**
+ * Reduces data by a given key and sums specified properties.
+ * @param {Array<Object>} data The array of data objects.
+ * @param {string} key The key to group by.
+ * @param {Array<string>} propsToSum The properties to sum.
+ * @param {Object} [propModifiers={}] Optional modifiers for properties.
+ * @returns {Object} The reduced data.
+ */
+function reduceData(data, key, propsToSum, propModifiers = {}) {
+    return data.reduce((acc, currentValue) => {
+        const groupKey = typeof key === 'function' ? key(currentValue) : currentValue[key];
+        if (!acc[groupKey]) {
+            acc[groupKey] = {};
+            propsToSum.forEach(prop => {
+                acc[groupKey][prop] = 0;
+            });
         }
-
-        // Accumulate nb_absences, justifie, and non_justifie values for each date
-        reducedValuesByDate[currentValue.date].nb_absences += currentValue.nb_absences;
-        reducedValuesByDate[currentValue.date].justifie += currentValue.justifie;
-        reducedValuesByDate[currentValue.date].non_justifie += currentValue.non_justifie;
-        reducedValuesByDate[currentValue.date].sum_plages += currentValue.sum_plages/60;
-    });
-
-    return reducedValuesByDate;
-}
-function trendChart(chartId, type, labels, nb_absences, absences_justifie, absences_non_justifie) {
-    var ctx = document.getElementById(chartId).getContext('2d');
-    return new Chart(ctx, {
-        type: type,
-        data: {
-            labels: labels,
-            datasets: [{
-                label: __('vocab.absence'),
-                data: nb_absences,
-                backgroundColor: 'rgba(54, 162, 235, 0.2)',
-                borderColor: 'rgba(54, 162, 235, 1)',
-                borderWidth: 1
-            },
-            {
-                label: 'مبرر',
-                data: absences_justifie,
-                backgroundColor: 'rgba(255, 99, 132, 0.2)',
-                borderColor: 'rgba(255, 99, 132, 0.2)',
-                borderWidth: 1
-            },
-            {
-                label: 'غير مبرر',
-                data: absences_non_justifie,
-                backgroundColor: 'rgba(255, 255, 153, 0.7)',
-                borderColor: 'rgba(255, 255, 153, 0.7)',
-                borderWidth: 1
+        propsToSum.forEach(prop => {
+            let value = currentValue[prop];
+            if (propModifiers[prop]) {
+                value = propModifiers[prop];
             }
-            ]
-        },
-    });
+            acc[groupKey][prop] += value;
+        });
+        return acc;
+    }, {});
 }
-function plagesTrendChart(chartId, type, labels, sum_plages) {
-    var ctx = document.getElementById(chartId).getContext('2d');
-    return new Chart(ctx, {
-        type: type,
-        data: {
-            labels: labels,
-            datasets: [{
-                label: 'ساعات الغياب',
-                data: sum_plages,
-                backgroundColor: 'rgba(54, 162, 235, 0.2)',
-                borderColor: 'rgba(54, 162, 235, 1)',
-                borderWidth: 1
-            },
-            ]
-        },
-    });
-}
-function comparingChart(chartId, type, label, labels, data) {
-    // Get array of colors
-    var backgroundColors = generateColors(labels.length);
-    var ctx = document.getElementById(chartId).getContext('2d');
-    return new Chart(ctx, {
-        type: type,
-        data: {
-            labels: labels,
-            datasets: [{
-                label: label,
-                data: data,
-                backgroundColor: backgroundColors,
-                borderColor: backgroundColors.map(color => color.replace('0.2',
-                    '1')),
-                borderWidth: 1
-            }]
-        },
 
-        options: {
-            scales: {
-                yAxes: [{
-                    ticks: {
-                        beginAtZero: true
-                    }
-                }]
-            }
-        }
-
-    });
-}
-function getChartData() {
+function getChartAbsenceData() {
     $.ajax({
         url: '/chart-absence',
         method: 'GET',
         datatype: 'json',
         data: {
-            'classe': $("#classe").val(),
-            'student': $("#student").val(),
-            'from': $("#from").val(),
-            'to': $('#to').val()
+            'classe': $("#classe").val() || null,
+            'student': $("#student").val() || null,
+            'from': $("#from").val() || null,
+            'to': $('#to').val() || null
         },
         success: function (response) {
             // Access the absenceData from the response
-            var absenceData = response.absenceData;
+            const absenceData = response.absenceData;
 
             // Mapping and reducing to sum nb_absences by date
-            var reducedValues = reduceAbsenceDataByDate(absenceData);
-
-            var dates = Object.keys(reducedValues);
-
-            var nb_absences = dates.map(function (date) {
-                return reducedValues[date].nb_absences;
-            });
-
-            var absences_justifie = dates.map(function (date) {
-                return reducedValues[date].justifie;
-            });
-
-            var absences_non_justifie = dates.map(function (date) {
-                return reducedValues[date].non_justifie;
-            });
-
-            var sum_plages = dates.map(function (date) {
-                return reducedValues[date].sum_plages;
-            });
-
-            if (chartOne) {
-                chartOne.destroy();
-            }
-            chartOne = trendChart('trendChart', 'line', dates, nb_absences, absences_justifie, absences_non_justifie);
+            const reducedByDate = reduceData(absenceData, 'date', ['nb_absences', 'justifie', 'non_justifie', 'sum_plages'], { sum_plages: val => val / 60 });
+            const dates = Object.keys(reducedByDate);
+            const trendDatasets = [
+                { label: VOCAB['absences'], data: dates.map(date => reducedByDate[date].nb_absences), backgroundColor: 'rgba(54, 162, 235, 0.2)', borderColor: 'rgba(54, 162, 235, 1)', borderWidth: 1 },
+                { label: VOCAB['absence_justified'], data: dates.map(date => reducedByDate[date].justifie), backgroundColor: 'rgba(75, 192, 192, 0.2)', borderColor: 'rgba(75, 192, 192, 1)', borderWidth: 1 },
+                { label: VOCAB['absence_not_justified'], data: dates.map(date => reducedByDate[date].non_justifie), backgroundColor: 'rgba(255, 99, 132, 0.2)', borderColor: 'rgba(255, 99, 132, 1)', borderWidth: 1 }
+            ];
+            chartOne = createOrUpdateChart('trendChart', chartOne, 'line', dates, trendDatasets);
 
             // Mapping and reducing to sum nb_absences by classe_name
-            var summedAbsencesByClass = absenceData.reduce(function (acc, currentValue) {
-                if (!acc[currentValue.classe_name]) {
-                    acc[currentValue.classe_name] = 0;
-                }
-                acc[currentValue.classe_name] += currentValue.nb_absences;
-                return acc;
-            }, {});
-            // Get keys array (class names)
-            var classNames = Object.keys(summedAbsencesByClass);
+            const reducedByClass = reduceData(absenceData, 'classe_name', ['nb_absences']);
+            const classNames = Object.keys(reducedByClass);
+            const absenceTotalsByClass = classNames.map(name => reducedByClass[name].nb_absences);
+            const classColors = generateColors(classNames.length);
+            const classDataset = [{ label: VOCAB['compare_sections'], data: absenceTotalsByClass, backgroundColor: classColors.map(c => c.backgroundColor), borderColor: classColors.map(c => c.borderColor), borderWidth: 1 }];
+            chartTwo = createOrUpdateChart('classesAbsenceChart', chartTwo, 'pie', classNames, classDataset);
 
-            // Get values array (sum of absences)
-            var absenceTotals = Object.values(summedAbsencesByClass);
-
-
-            if (chartTwo) {
-                chartTwo.destroy();
-            }
-            chartTwo = comparingChart('classesAbsenceChart', 'pie', __('vocab.compare_sections'), classNames, absenceTotals);
-
-
-            var summedAbsencesByStudent = absenceData.reduce(function (acc, currentValue) {
-                if (!acc[currentValue.firstName + ' ' + currentValue.lastName]) {
-                    acc[currentValue.firstName + ' ' + currentValue.lastName] = 0;
-                }
-                acc[currentValue.firstName + ' ' + currentValue.lastName] += currentValue.nb_absences;
-                return acc;
-            }, {});
-
-             // Get keys array
-             var studentNames = Object.keys(summedAbsencesByStudent);
-
-             // Get values array
-             var studentsAbsences = Object.values(summedAbsencesByStudent);
-            if (chartThree) {
-                chartThree.destroy();
-            }
-            chartThree = comparingChart('studentsAbsenceChart', 'polarArea', __('vocab.students'), studentNames, studentsAbsences);
+            // Mapping and reducing to sum nb_absences by student
+            const reducedByStudent = reduceData(absenceData, item => `${item.firstName} ${item.lastName}`, ['nb_absences']);
+            const studentNames = Object.keys(reducedByStudent);
+            const absenceTotalsByStudent = studentNames.map(name => reducedByStudent[name].nb_absences);
+            const studentColors = generateColors(studentNames.length);
+            const studentDataset = [{ label: VOCAB['students'], data: absenceTotalsByStudent, backgroundColor: studentColors.map(c => c.backgroundColor), borderColor: studentColors.map(c => c.borderColor), borderWidth: 1 }];
+            chartThree = createOrUpdateChart('studentsAbsenceChart', chartThree, 'polarArea', studentNames, studentDataset);
         },
         error: function (error) {
             console.log(error);
         }
     });
 }
-
+ 
 // Define the function to fetch students based on the selected class
 function fetchStudents(classeId) {
     if (classeId) {
@@ -232,55 +149,100 @@ function fetchStudents(classeId) {
 }
 
 function getStudentChartData() {
-    $.ajax({
+    const ajaxOptions = {
         url: '/chart-absence',
         method: 'GET',
-        datatype: 'json',
+        dataType: 'json',
         data: {
-            'classe': $("#classe").val(),
-            'student': $("#student").val(),
-            'from': $("#from").val(),
-            'to': $('#to').val()
-        },
-        success: function (response) {
-            // Access the absenceData from the response
-            var absenceData = response.absenceData;
-
-            // Mapping and reducing to sum nb_absences by date
-            var reducedValues = reduceAbsenceDataByDate(absenceData);
-
-            var dates = Object.keys(reducedValues);
-
-            var nb_absences = dates.map(function (date) {
-                return reducedValues[date].nb_absences;
-            });
-
-            var absences_justifie = dates.map(function (date) {
-                return reducedValues[date].justifie;
-            });
-
-            var absences_non_justifie = dates.map(function (date) {
-                return reducedValues[date].non_justifie;
-            });
-
-            var sum_plages = dates.map(function (date) {
-                return reducedValues[date].sum_plages;
-            });
-
-            if (chartOne) {
-                chartOne.destroy();
-            }
-            chartOne = trendChart('trendChart', 'bar', dates, nb_absences, absences_justifie, absences_non_justifie);
-
-
-            if (chartTwo) {
-                chartTwo.destroy();
-            }
-            chartTwo = plagesTrendChart('plagesTrendChart', 'bar', dates, sum_plages);
-
-        },
-        error: function (error) {
-            console.log(error);
+            'classe': $("#classe").val() || null,
+            'student': $("#student").val() || null,
+            'from': $("#from").val() || null,
+            'to': $('#to').val() || null
         }
+    };
+
+    $.ajax(ajaxOptions).done(function(response) {
+        const absenceData = response.absenceData;
+        const reducedByDate = reduceData(absenceData, 'date', ['nb_absences', 'justifie', 'non_justifie', 'sum_plages'], { sum_plages: val => val / 60 });
+        const dates = Object.keys(reducedByDate);
+
+        const trendDatasets = [
+            { label: VOCAB['absences'], data: dates.map(date => reducedByDate[date].nb_absences), backgroundColor: 'rgba(54, 162, 235, 0.2)', borderColor: 'rgba(54, 162, 235, 1)', borderWidth: 1 },
+            { label: VOCAB['absence_justified'], data: dates.map(date => reducedByDate[date].justifie), backgroundColor: 'rgba(75, 192, 192, 0.2)', borderColor: 'rgba(75, 192, 192, 1)', borderWidth: 1 },
+            { label: VOCAB['absence_not_justified'], data: dates.map(date => reducedByDate[date].non_justifie), backgroundColor: 'rgba(255, 99, 132, 0.2)', borderColor: 'rgba(255, 99, 132, 1)', borderWidth: 1 }
+        ];
+        chartOne = createOrUpdateChart('trendChart', chartOne, 'bar', dates, trendDatasets);
+
+        const plagesDataset = [{ label: VOCAB['plages'], data: dates.map(date => reducedByDate[date].sum_plages), backgroundColor: 'rgba(255, 159, 64, 0.2)', borderColor: 'rgba(255, 159, 64, 1)', borderWidth: 1 }];
+        chartTwo = createOrUpdateChart('plagesTrendChart', chartTwo, 'bar', dates, plagesDataset);
+    }).fail(function(error) {
+        console.log(error);
+    });
+}
+
+function getChartMisconductData() {
+    const ajaxOptions = {
+        url: '/chart-report',
+        method: 'GET',
+        dataType: 'json',
+        data: {
+            'classe': $("#classe").val() || null,
+            'student': $("#student").val() || null,
+            'from': $("#from").val() || null,
+            'to': $('#to').val() || null
+        }
+    };
+
+    $.ajax(ajaxOptions).done(function(response) {
+        const reportData = response.reportData;
+
+        // 1. Trend chart by date and status
+        const reducedByDate = reportData.reduce((acc, item) => {
+            if (!acc[item.date]) {
+                acc[item.date] = { total: 0 };
+            }
+            acc[item.date].total += item.nb_reports;
+            acc[item.date][item.status] = (acc[item.date][item.status] || 0) + item.nb_reports;
+            return acc;
+        }, {});
+
+        const dates = Object.keys(reducedByDate).sort();
+        const statuses = [...new Set(reportData.map(item => item.status))];
+        const statusColors = generateColors(statuses.length);
+
+        const trendDatasets = statuses.map((status, index) => ({
+            label: VOCAB[status] || status,
+            data: dates.map(date => reducedByDate[date][status] || 0),
+            backgroundColor: statusColors[index].backgroundColor,
+            borderColor: statusColors[index].borderColor,
+            borderWidth: 1
+        }));
+
+        chartFour = createOrUpdateChart('reportTrendChart', chartFour, 'line', dates, trendDatasets);
+
+        // 2. Comparison chart by class
+        const reducedByClass = reduceData(reportData, 'classe_name', ['nb_reports']);
+        const classNames = Object.keys(reducedByClass);
+        const reportTotalsByClass = classNames.map(name => reducedByClass[name].nb_reports);
+        const classColors = generateColors(classNames.length);
+        const classDataset = [{
+            label: VOCAB['compare_sections'], // Assuming VOCAB is available
+            data: reportTotalsByClass,
+            backgroundColor: classColors.map(c => c.backgroundColor),
+            borderColor: classColors.map(c => c.borderColor),
+            borderWidth: 1
+        }];
+        chartFive = createOrUpdateChart('classesReportsChart', chartFive, 'pie', classNames, classDataset);
+
+        // 3. Comparison chart by student
+        const reducedByStudent = reduceData(reportData, item => `${item.firstName} ${item.lastName}`, ['nb_reports']);
+        const studentNames = Object.keys(reducedByStudent);
+        const reportTotalsByStudent = studentNames.map(name => reducedByStudent[name].nb_reports);
+        const studentColors = generateColors(studentNames.length);
+        const studentDataset = [{ label: VOCAB['students'], data: reportTotalsByStudent, backgroundColor: studentColors.map(c => c.backgroundColor), borderColor: studentColors.map(c => c.borderColor), borderWidth: 1 }];
+        chartSix = createOrUpdateChart('studentsReportsChart', chartSix, 'polarArea', studentNames, studentDataset);
+
+    }).fail(function(error) {
+        console.log(error);
     });
 }

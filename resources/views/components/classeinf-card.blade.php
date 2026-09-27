@@ -9,7 +9,7 @@
 
 
                 <a href="{{ route('classeImages.index', ['classe' => $classe->id]) }}">
-                    <img src="{{ $classe->classeImage->uri ?? asset('/assets/images/no-image.png') }}" alt="Photo 1"
+                    <img src="{{ $classe->classeImage->uri ?? asset('/assets/images/no-image-class.jpg') }}" alt="Photo 1"
                         class="img-fluid">
                 </a>
                 <div class="ribbon-wrapper ribbon">

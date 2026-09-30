@@ -2,30 +2,28 @@
 
 namespace App\Http\Middleware;
 
+use Closure;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Http\Request;
 
-
-class AdminAuth extends Authenticate
+class AdminAuth
 {
-
     /**
-     * Get the path the user should be redirected to when they are not authenticated.
+     * Handle an incoming request.
      *
      * @param  \Illuminate\Http\Request  $request
-     * @return string|null
+     * @param  \Closure  $next
+     * @return mixed
      */
-    protected function redirectTo($request)
+    public function handle(Request $request, Closure $next)
     {
-        if (!$request->expectsJson()) {
-            if (Auth::check()) {
-                if (Auth::user()->hasRole('admin')) {
-                    return route('admins.dashboard');
-                } else {
-                    return route('users.dashboard');
-                }
-            } else {
-                return route('users.login');
+        if (!Auth::check() || !Auth::user()->hasRole('admin')) {
+            if ($request->expectsJson()) {
+                return response()->json(['message' => __('vocab.not_authorized')], 403);
             }
+            return redirect()->route('home')->with('error', __('vocab.not_authorized'));
         }
+
+        return $next($request);
     }
 }

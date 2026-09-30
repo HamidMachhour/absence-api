@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\DB;
 
 
 /**
@@ -84,15 +85,31 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
     ];
 
-    protected static function boot()
+    protected static function booted()
     {
-        parent::boot();
-
         static::creating(function ($model) {
             if (empty($model->id)) {
                 $model->id = (string) Str::uuid();
             }
         });
+
+        static::deleting(function ($user) {
+            // Use a transaction to ensure data integrity
+            DB::transaction(function () use ($user) {
+                $user->seances()->delete();
+                $user->classes->each->delete(); // This will trigger cascading deletes on Seance, Student, etc.
+                $user->students->each->delete();
+                $user->addresses()->delete();
+                $user->userImages()->delete();
+                $user->roles()->delete();
+                $user->enrollments()->delete();
+                // Handle both sides of the friendship
+                Friendship::where('userId', $user->id)->orWhere('friend', $user->id)->delete();
+                // Handle both sent and received messages
+                Message::where('s_user_id', $user->id)->orWhere('d_user_id', $user->id)->delete();
+            });
+        });
+    
     }
 
 
@@ -207,11 +224,11 @@ class User extends Authenticatable
     {
 
         $locale = Session::get('locale', 'en'); // Get the locale from the session, with 'en' as the default
-        if ($locale == 'ar') {
+        if ($locale === 'ar') {
             return $this->firstName . ' ' . $this->lastName;
-        } elseif ($locale == 'fr') {
+        } elseif ($locale === 'fr') {
             return $this->firstNameFr . ' ' . $this->lastNameFr;
-        } elseif ($locale == 'en') {
+        } elseif ($locale === 'en') {
             return $this->firstNameEn . ' ' . $this->lastNameEn;
         }
         return $this->firstNameZ . ' ' . $this->lastNameZ;
@@ -230,7 +247,15 @@ class User extends Authenticatable
     }
 
 
+    public function sourceMessages()
+    {
+        return $this->hasMany(Message::class, 's_user_id');
+    }
 
+    public function targetMessages()
+    {
+        return $this->hasMany(Message::class, 'd_user_id');
+    }
 
     //accepted friends users only
     public function friends()

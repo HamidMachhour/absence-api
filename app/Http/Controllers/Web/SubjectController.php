@@ -30,7 +30,7 @@ class SubjectController extends Controller
                 'subjects' => $subjects,
             ]);
         } catch (Exception $e) {
-            return view('error', ["message" => __('vocab.empty')  . $e->getMessage()]);
+            return view('error', ["message" => __('vocab.no_data')  . $e->getMessage()]);
         }
     }
     /**

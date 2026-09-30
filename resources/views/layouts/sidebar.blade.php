@@ -1,5 +1,5 @@
   <!-- Main Sidebar Container -->
-  <aside class="main-sidebar sidebar-light-primary elevation-4 ">
+  <aside class="main-sidebar sidebar-light-primary elevation-4 no-print">
       <!-- Brand Logo -->
       <a href="{{ route('home') }}" class="brand-link">
           <img src="{{ URL::asset('assets/images/logo.png') }}" alt="{{__('vocab.platform').' '.__('vocab.absence')}}" class="brand-image img-circle elevation-2 "
@@ -167,7 +167,7 @@
                       <a href="#" class="nav-link">
                           <i class="nav-icon far fa-calendar-alt"></i>
                           <p>
-                             {{__('vocab.absence_management')}}
+                              {{__('vocab.absence_management')}}
                               <i class="fas fa-angle-left right"></i>
                           </p>
                       </a>
@@ -230,6 +230,7 @@
                       </a>
                       <ul class="nav nav-treeview">
                           {{-- Sub-menu 1: Misconduct Acts (What the student did) --}}
+                          @if (auth()->user()->hasRole('admin'))
                           <li class="nav-item">
                               <a href="{{ route('misconduct_acts.index') }}" class="nav-link">
                                   <i class="far fa-circle nav-icon"></i>
@@ -237,26 +238,44 @@
                               </a>
                           </li>
                           {{-- Sub-menu 2: Proposed Actions (What the teacher recommends) --}}
-                          <li class="nav-item">
+
+                           <li class="nav-item">
                               <a href="{{ route('proposed_actions.index') }}" class="nav-link">
                                   <i class="far fa-circle nav-icon"></i>
                                   <p>{{__('vocab.proposed_actions')}}</p>
                               </a>
                           </li>
-                            {{-- Sub-menu 2: Proposed Actions (What the teacher recommends) --}}
+                          @endif
+
+                          @if (auth()->user()->hasRole('admin') || auth()->user()->hasRole('manager') 
+                          || auth()->user()->hasRole('teacher') || auth()->user()->hasRole('student'))
+
+                         
                           <li class="nav-item">
                               <a href="{{ route('misconduct_reports.index') }}" class="nav-link">
                                   <i class="far fa-circle nav-icon"></i>
                                   <p>{{__('vocab.misconduct_reports')}}</p>
                               </a>
                           </li>
+                          @endif
                       </ul>
                   </li>
+                  @if(auth()->user()->hasRole('admin'))
                   <li class="nav-item">
                       <a href="{{ route('settings.school.edit') }}" class="nav-link">
                           <i class="nav-icon far fa-cogs"></i>
                           <p>
                               {{__('vocab.school_configuration')}}
+                              <i class="fas fa-angle-left right"></i>
+                          </p>
+                      </a>
+                  </li>
+                  @endif
+                  <li class="nav-item">
+                      <a href="{{ route('terminal.selectRoom') }}" class="nav-link">
+                          <i class="nav-icon far fa-cam"></i>
+                          <p>
+                              {{__('vocab.terminal_mode')}}
                               <i class="fas fa-angle-left right"></i>
                           </p>
                       </a>

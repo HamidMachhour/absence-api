@@ -29,7 +29,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class Address extends AbsenceModel
 {
     protected $table = 'Address';
-    use SoftDeletes;
+    
 
     protected $fillable = [
         'strAddress',

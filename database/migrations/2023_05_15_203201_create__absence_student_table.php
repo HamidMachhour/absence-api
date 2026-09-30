@@ -19,7 +19,7 @@ class CreateAbsenceStudentTable extends Migration
             $table->string('absenceId',255);
             $table->float('plage');
             $table->text('justification')->nullable();
-            $table->text('deleted_at')->nullable();
+             $table->timestamp('deleted_at')->nullable();;
             $table->timestamps();
         });
     }

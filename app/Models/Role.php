@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Session;
 
 class Role extends Model
@@ -32,5 +33,24 @@ class Role extends Model
             return $this->nameEn;
         }
         return $this->nameZ;
+    }
+
+    /**
+     * Get the user roles associated with the role.
+     */
+    public function userRoles()
+    {
+        return $this->hasMany(UserRole::class, 'roleId');
+    }
+
+    protected static function booted()
+    {
+        parent::boot();
+
+        static::deleting(function ($role) {
+            DB::transaction(function () use ($role) {
+                $role->userRoles()->delete();
+            });
+        });
     }
 }

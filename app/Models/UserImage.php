@@ -22,7 +22,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  */
 class UserImage extends AbsenceModel
 {
-    use SoftDeletes;
+    
 
 	protected $table = 'UserImage';
 

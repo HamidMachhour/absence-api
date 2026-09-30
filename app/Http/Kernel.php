@@ -31,6 +31,8 @@ class Kernel extends HttpKernel
     protected $middlewareGroups = [
         'web' => [
             \App\Http\Middleware\EncryptCookies::class,
+            \App\Http\Middleware\CheckForInstallation::class, // Add the CheckForInstallation middleware here
+
             \Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse::class,
             \Illuminate\Session\Middleware\StartSession::class,
             \Illuminate\View\Middleware\ShareErrorsFromSession::class,
@@ -66,5 +68,6 @@ class Kernel extends HttpKernel
         'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
 
         'adminauth' => \App\Http\Middleware\AdminAuth::class,// zadtha ana
+        'terminal' => \App\Http\Middleware\EnsureUserHasTerminalRole::class,
     ];
 }

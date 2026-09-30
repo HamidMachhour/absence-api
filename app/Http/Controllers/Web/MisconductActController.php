@@ -16,9 +16,16 @@ class MisconductActController extends Controller
      */
     public function index()
     {
+        $user = auth()->user();
+
+        // Only admins are allowed to access misconduct acts management
+        if (!$user || !$user->hasRole('admin')) {
+            redirect()->route('home')->with('message', __('vocab.not_authorized'));
+        }
+
         // Retrieve all misconduct acts for display in a listing table
         $misconduct_acts = MisconductAct::all();
-        
+
         return view('misconduct_acts.index', compact('misconduct_acts'));
     }
 
@@ -51,9 +58,9 @@ class MisconductActController extends Controller
             MisconductAct::create($validatedData);
 
             return redirect()->route('misconduct_acts.index')
-                             ->with('success', __('vocab.misconduct_act_created_successfully'));
+                ->with('success', __('vocab.misconduct_act_created_successfully'));
         } catch (Exception $e) {
-             return redirect()->back()->with('error', __('vocab.error_creating_misconduct_act') . $e->getMessage());
+            return redirect()->back()->with('error', __('vocab.error_creating_misconduct_act') . $e->getMessage());
         }
     }
 
@@ -79,8 +86,12 @@ class MisconductActController extends Controller
     {
         // 1. Validation (must ignore the current model's name_ar value)
         $validatedData = $request->validate([
-            'name_ar' => ['required', 'string', 'max:255', 
-                          'unique:MisconductAction,name_ar,' . $misconduct_act->id],
+            'name_ar' => [
+                'required',
+                'string',
+                'max:255',
+                'unique:MisconductAction,name_ar,' . $misconduct_act->id
+            ],
             'name_fr' => ['nullable', 'string', 'max:255'],
             'name_en' => ['nullable', 'string', 'max:255'],
             'name_z' => ['nullable', 'string', 'max:255'],
@@ -91,9 +102,9 @@ class MisconductActController extends Controller
             $misconduct_act->update($validatedData);
 
             return redirect()->route('misconduct_acts.index')
-                             ->with('success', __('vocab.misconduct_act_updated_successfully'));
+                ->with('success', __('vocab.misconduct_act_updated_successfully'));
         } catch (Exception $e) {
-             return redirect()->back()->with('error', __('vocab.error_updating_misconduct_act') . $e->getMessage());
+            return redirect()->back()->with('error', __('vocab.error_updating_misconduct_act') . $e->getMessage());
         }
     }
 
@@ -108,13 +119,13 @@ class MisconductActController extends Controller
         try {
             // Before deleting, consider checking if the act is linked to any existing reports.
             // If it is, you might prevent deletion or handle the cascade.
-            
+
             $misconduct_act->delete();
 
             return redirect()->route('misconduct_acts.index')
-                             ->with('success', __('vocab.misconduct_act_deleted_successfully'));
+                ->with('success', __('vocab.misconduct_act_deleted_successfully'));
         } catch (Exception $e) {
-             return redirect()->back()->with('error', __('vocab.error_deleting_misconduct_act') . $e->getMessage());
+            return redirect()->back()->with('error', __('vocab.error_deleting_misconduct_act') . $e->getMessage());
         }
     }
 
@@ -126,22 +137,11 @@ class MisconductActController extends Controller
     {
 
         try {
-            // Use a transaction to ensure integrity during bulk deletion
-            
-            
-            DB::beginTransaction();
-
-             $usedActs = DB::table('ReportMisconductAction')->pluck('misconductActionId')->unique();
-
-            // Delete all roles whose IDs are NOT in the list of used roles
-            MisconductAct::whereNotIn('id', $usedActs)->delete();
-
-            DB::commit();
-
+            // Note: This will not fire individual model events.
+            MisconductAct::query()->delete();
             return redirect()->route('misconduct_acts.index')
-                             ->with('success', __('vocab.misconduct_acts_deleted_successfully'));
+                ->with('success', __('vocab.misconduct_acts_deleted_successfully'));
         } catch (Exception $e) {
-            DB::rollBack();
             return redirect()->back()->with('error', __('vocab.error_deleting_misconduct_acts') . $e->getMessage());
         }
     }

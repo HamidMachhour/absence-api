@@ -25,7 +25,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  */
 class Enrollment extends AbsenceModel
 {
-    use SoftDeletes;
+    
 
     protected $table = 'Enrollment';
 

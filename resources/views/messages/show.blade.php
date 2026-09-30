@@ -17,7 +17,7 @@
 
 @section('content')
 <div class="card mx-3">
-    <div class="card-header">
+    <div class="card-header d-flex gap-2  {{ App::getLocale() == 'ar' ? 'flex-row-reverse' : 'flex-row' }}">
         <div class=" h4">{{ $message->subject }}</div>
     </div>
     <div class="card-body">

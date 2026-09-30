@@ -44,7 +44,7 @@ class SeanceController extends Controller
                 ->latest()
                 ->paginate($page_size);
         } catch (Exception $e) {
-            return response()->json(['message' => __('vocab.empty') . $e->getMessage()], 404);
+            return response()->json(['message' => __('vocab.no_data') . $e->getMessage()], 404);
         }
     }
 
@@ -69,7 +69,7 @@ class SeanceController extends Controller
 
             return $this->index($request);
         } catch (Exception $e) {
-            return response()->json(['message' => __('vocab.empty') . $e->getMessage()], 404);
+            return response()->json(['message' => __('vocab.no_data') . $e->getMessage()], 404);
         }
     }
 
@@ -257,7 +257,7 @@ class SeanceController extends Controller
         }
 
         // Soft delete all seances by updating the deleted_at timestamp
-        Seance::filter($request)->update(['deleted_at' => now()]);
+        Seance::filter($request)->get()->each->delete();
 
         // Return a response
         return response()->json(['message' => __('vocab.delete_success')], 200);
@@ -307,7 +307,7 @@ class SeanceController extends Controller
 
             return Response::make($csv->toString(), 200, $headers);
         } catch (Exception $e) {
-            return response()->json(['message' => __('vocab.empty') . $e->getMessage()], 404);
+            return response()->json(['message' => __('vocab.no_data') . $e->getMessage()], 404);
         }
     }
 

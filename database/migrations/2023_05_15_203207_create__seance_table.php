@@ -26,7 +26,7 @@ class CreateSeanceTable extends Migration
             $table->time('de')->default('08:00')->nullable();
             $table->time('a')->default('09:00')->nullable();
 
-            $table->text('deleted_at')->nullable();
+             $table->timestamp('deleted_at')->nullable();;
             $table->timestamps();
         });
     }

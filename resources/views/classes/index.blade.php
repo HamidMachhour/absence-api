@@ -51,7 +51,7 @@
     <x-classe-card :classe="$classe" />
     @endforeach
     @else
-    <p>{{__('vocab.empty')}}</p>
+    <p>{{__('vocab.no_data')}}</p>
     @endunless
 </div>
 

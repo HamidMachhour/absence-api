@@ -1,4 +1,4 @@
-<footer class="main-footer">
+<footer class="main-footer no-print">
     <strong>{{__('vocab.copyright')}}</strong>
 
     <div class="float-right d-none d-sm-inline-block">

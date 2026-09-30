@@ -16,18 +16,20 @@ return new class extends Migration
         Schema::create('MisconductReport', function (Blueprint $table) {
             $table->id();
 
-            $table->string('studentId',255);      // The student involved
-            $table->string('seanceId',255); // Link to a specific session
+            $table->string('studentId', 255);      // The student involved
+            $table->string('seanceId', 255); // Link to a specific session
 
             // Dynamic Data
             $table->date('reportDate')->nullable;                          // The date of the incident
 
             // Custom/Other Fields
-            $table->text('otherActs')->nullable();                 
-            $table->text('otherPropositions')->nullable();              
+            $table->text('otherActs')->nullable();
+            $table->text('otherPropositions')->nullable();
 
             // Administrative Status
             $table->enum('status', ['draft', 'submitted', 'reviewed', 'archived'])->default('draft');
+
+             $table->timestamp('deleted_at')->nullable();;
 
             $table->timestamps();
         });

@@ -21,7 +21,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  */
 class SubscriptionHistory extends AbsenceModel
 {
-    use SoftDeletes;
+    
 
 	protected $table = 'SubscriptionHistory';
 	protected $fillable = [

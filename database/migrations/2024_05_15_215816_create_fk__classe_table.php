@@ -15,7 +15,7 @@ class CreateFkClasseTable extends Migration
     {
         Schema::table('Classe', function (Blueprint $table) {
             $table->foreign('userId')->references('id')->on('_User')->onUpdate('cascade')->onDelete('cascade');
-            $table->foreign('imageId')->references('id')->on('ClasseImage')->onDelete('set null');
+            $table->foreign('imageId')->references('id')->on('ClasseImage')->onUpdate('cascade')->onDelete('set null');
             $table->foreign('subscriptionId')->references('id')->on('Subscription')->onUpdate('cascade')->onDelete('set null');
         });
     }

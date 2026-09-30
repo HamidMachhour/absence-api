@@ -26,7 +26,7 @@
                 <!-- left column -->
                 <div class="col-md-12">
                     <div class="card card-primary">
-                        <div class="card-header">
+                        <div class="card-header d-flex gap-2  {{ App::getLocale() == 'ar' ? 'flex-row-reverse' : 'flex-row' }}">
                             <div class="card-title">{{__('vocab.import')}} {{__('vocab.class')}}</div>
                             @error('message')
                                 <p class="text-red-500 text-xs mt-1">{{ $message }}</p>

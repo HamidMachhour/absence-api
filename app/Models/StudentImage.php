@@ -24,7 +24,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class StudentImage extends AbsenceModel
 {
 	protected $table = 'StudentImage';
-    use SoftDeletes;
+    
 
 	protected $fillable = [
 		'studentId',

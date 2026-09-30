@@ -18,7 +18,17 @@
             <i class="fas fa-edit"></i>
             {{__('vocab.edit')}} {{__('vocab.class')}}
         </a>
-        <form action="{{ route('classes.destroy', ['classe' => $classe->id]) }}" method="POST">
+       
+        <form action="{{ route('classes.empty', ['classe' => $classe->id]) }}" method="POST">
+            @csrf
+            <button type="submit" class="btn btn-app bg-secondary"
+                onclick="return confirm('{{__('vocab.are_you_sure_empty_class').' ?'}}')">
+                <i class="fas fa-broom"></i>
+                {{__('vocab.empty')}} {{__('vocab.class')}}
+            </button>
+        </form>
+
+         <form action="{{ route('classes.destroy', ['classe' => $classe->id]) }}" method="POST">
             @csrf
             @method('DELETE')
             <button type="submit" class="btn btn-app bg-danger"

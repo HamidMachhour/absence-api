@@ -9,22 +9,42 @@ use Illuminate\Support\Facades\DB;
 
 class SubjectSeeder extends Seeder
 {
-    public function run()
+  public function run()
     {
-        // Clear  table
-        // DB::table('Subject')->truncate();
+        // Clear table (uncomment if needed)
+        // DB::table('subjects')->truncate(); // Assuming your table is 'subjects'
 
 
         $subjects = [
-            ['name' => 'الرياضيات', 'nameFr' => 'Math', 'nameEn' => 'Math', 'nameZ' => 'ⵜⵉⵎⵙⵏⴰⵙⵉⵏ'],
-            ['name' => 'العربية', 'nameFr' => 'Langue Arabe', 'nameEn' => 'Arabic', 'nameZ' => 'ⵜⴰⵄⵔⴰⴱⵜ'],
-            ['name' => 'الفرنسية', 'nameFr' => 'Français', 'nameEn' => 'French', 'nameZ' => 'ⵜⴰⴼⵔⴰⵏⵙⵉⵙⵜ'],
-            ['name' => 'العلوم الفيزيائية', 'nameFr' => 'PC', 'nameEn' => 'PS', 'nameZ' => 'ⵜⵉⵙⵏⴰⵏⴰⵢⵉⵏ ⵜⵉⵎⵥⵢⴰⵏⵉⵏ'],
-            ['name' => 'علوم الحياة و الارض', 'nameFr' => 'SVT', 'nameEn' => 'LES', 'nameZ' => 'ⵜⵉⵙⵏⴰⵏⴰⵢⵉⵏ ⵏ ⵜⵓⴷⵔⵜ ⴷ ⵡⴰⴽⴰⵍ'],
+            // Core Sciences and Languages (Existing)
+            ['name' => 'الرياضيات', 'nameFr' => 'Mathématiques', 'nameEn' => 'Mathematics', 'nameZ' => 'ⵜⵉⵎⵙⵏⴰⵙⵉⵏ'],
+            ['name' => 'اللغة العربية', 'nameFr' => 'Langue Arabe', 'nameEn' => 'Arabic Language', 'nameZ' => 'ⵜⴰⵄⵔⴰⴱⵜ'],
+            ['name' => 'اللغة الفرنسية', 'nameFr' => 'Français', 'nameEn' => 'French Language', 'nameZ' => 'ⵜⴰⴼⵔⴰⵏⵙⵉⵙⵜ'],
+            ['name' => 'العلوم الفيزيائية والكيميائية', 'nameFr' => 'Sciences Physiques et Chimiques', 'nameEn' => 'Physical and Chemical Sciences', 'nameZ' => 'ⵜⵉⵙⵏⴰⵏⴰⵢⵉⵏ ⵜⵉⵎⵥⵢⴰⵏⵉⵏ ⴷ ⵜⵉⴽⵉⵎⵢⴰⵏⵉⵏ'],
+            ['name' => 'علوم الحياة والأرض', 'nameFr' => 'Sciences de la Vie et de la Terre', 'nameEn' => 'Life and Earth Sciences', 'nameZ' => 'ⵜⵉⵙⵏⴰⵏⴰⵢⵉⵏ ⵏ ⵜⵓⴷⵔⵜ ⴷ ⵡⴰⴽⴰⵍ'],
+
+            // Religious and Social Studies
+            ['name' => 'التربية الإسلامية', 'nameFr' => 'Éducation Islamique', 'nameEn' => 'Islamic Education', 'nameZ' => 'ⴰⵙⴳⵎⵓ ⴰⴷⵉⵏⵉ'],
+            ['name' => 'الاجتماعيات', 'nameFr' => 'Sciences Sociales', 'nameEn' => 'Social Studies', 'nameZ' => 'ⵜⵉⵎⵙⴽⴰⵔ ⵜⵉⵎⵢⴰⵏⵉⵏ'],
+            ['name' => 'التاريخ والجغرافيا', 'nameFr' => 'Histoire et Géographie', 'nameEn' => 'History and Geography', 'nameZ' => 'ⴰⵎⵣⵔⵓⵢ ⴷ ⵜⴰⵎⴰⵥⴰⵢⵜ'],
+            ['name' => 'الفلسفة', 'nameFr' => 'Philosophie', 'nameEn' => 'Philosophy', 'nameZ' => 'ⵜⴰⴼⵍⵙⴼⵜ'],
+
+            // Foreign Languages
+            ['name' => 'اللغة الإنجليزية', 'nameFr' => 'Anglais', 'nameEn' => 'English Language', 'nameZ' => 'ⵜⴰⵏⴳⵍⵉⵣⵉⵜ'],
+            ['name' => 'اللغة الإسبانية', 'nameFr' => 'Espagnol', 'nameEn' => 'Spanish Language', 'nameZ' => 'ⵜⴰⵙⴱⴰⵏⵢⵓⵜ'], // Taught in some schools/regions
+
+            // Technical and Arts
+            ['name' => 'التربية البدنية والرياضة', 'nameFr' => 'Éducation Physique et Sportive', 'nameEn' => 'Physical Education and Sport', 'nameZ' => 'ⴰⵙⴳⵎⵓ ⴰⴼⵉⵣⵉⴽⵉ ⴷ ⵜⴰⵏⵏⴰⵢⵜ'],
+            ['name' => 'التربية التشكيلية', 'nameFr' => 'Arts Plastiques', 'nameEn' => 'Plastic Arts', 'nameZ' => 'ⵜⴰⵙⵏⴰ ⵜⴰⵎⵙⴽⴰⵍⵜ'],
+            ['name' => 'الإعلاميات', 'nameFr' => 'Informatique', 'nameEn' => 'Computer Science', 'nameZ' => 'ⴰⵎⵙⴽⴰⵔ ⵏ ⵉⵏⴼⵓⵔⵎⴰⵜⵉⴽ'],
         ];
+
         foreach ($subjects as $subject) {
-            $subject['id'] = Str::uuid();
-            Subject::create($subject);
+            // Check if the subject already exists to prevent duplicates on rerun
+            if (!Subject::where('name', $subject['name'])->exists()) {
+                $subject['id'] = Str::uuid();
+                Subject::create($subject);
+            }
         }
     }
 }

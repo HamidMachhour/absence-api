@@ -6,7 +6,7 @@
     <td>
         {{ $role->roleName() }}
     </td>
-    <td>
+   <!--  <td>
         <div class='btn-group gap-2'>
             <a href="{{ route('roles.edit', ['role' => $role->id]) }}" class="btn btn-app mx-1 bg-primary">
                 <i class="fas fa-edit"></i>
@@ -24,5 +24,5 @@
             </form>
 
         </div>
-    </td>
+    </td> -->
 </tr>

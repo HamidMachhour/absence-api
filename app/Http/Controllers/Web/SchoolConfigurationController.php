@@ -21,7 +21,7 @@ class SchoolConfigurationController extends Controller
         // Ensure only authorized users (e.g., admins) can access this
         try {
             if (!Auth::check() || !Auth::user()->hasRole('admin')) {
-                return back()->with('message', __('vocab.not_authorized'));
+                return redirect()->route('home')->with('message', __('vocab.not_authorized'));
             }
 
             // Retrieve the single configuration row (or null if it doesn't exist)
@@ -41,7 +41,7 @@ class SchoolConfigurationController extends Controller
     {
         // Ensure authorization check here as well
         if (!Auth::check() || !Auth::user()->hasRole('admin')) {
-            return back()->with('message', __('vocab.not_authorized'));
+            return redirect()->route('home')->with('message', __('vocab.not_authorized'));
         }
 
         // 1. Validation
@@ -67,10 +67,14 @@ class SchoolConfigurationController extends Controller
             'email' => ['nullable', 'email', 'max:150'],
             'current_academic_start' => ['nullable', 'date'],
             'current_academic_end' => ['nullable', 'date', 'after:current_academic_start'],
-            // 'logo_path' handling (file upload logic would go here)
+            'logo_path' => ['nullable', 'string', 'max:255'  ],
+            'process_attendances_enabled' => ['nullable', 'boolean'],
         ]);
 
         // 2. Update or Create the single row (always using ID 1 as the key)
+        // Ensure the checkbox value is persisted as boolean (checkbox absence => false)
+        $validatedData['process_attendances_enabled'] = $request->has('process_attendances_enabled') ? true : false;
+
         SchoolConfiguration::updateOrCreate(
             ['id' => 1], // Key to identify the single row
             $validatedData

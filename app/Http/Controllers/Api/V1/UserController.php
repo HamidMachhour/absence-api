@@ -48,7 +48,7 @@ class UserController extends Controller
 
             return $query->paginate($page_size);
         } catch (Exception $e) {
-            return response()->json(['message' => __('vocab.empty') . $e->getMessage()], 404);
+            return response()->json(['message' => __('vocab.no_data') . $e->getMessage()], 404);
         }
     }
 
@@ -438,17 +438,11 @@ class UserController extends Controller
             return response()->json(['message' => __('vocab.delete_failure') . ' ' . __('vocab.not_authorized')], 403);
         }
 
-        DB::transaction(function () use ($user) {
-            $user->tokens()->delete();
-            $user->absenceStudents()->delete();
-            $user->students()->delete();
-            $user->seances()->delete();
-            $user->userImages()->delete();
-            $user->attendances()->delete();
-            // Delete the user's account
-            $user->delete();
-        });
+        // The deleting event on the User model will handle cascading soft deletes.
+        // We just need to delete the user's tokens here.
+        $user->tokens()->delete();
 
+        $user->delete();
 
         return response()->json(['message' => __('vocab.delete_success')], 200);
     }
@@ -499,7 +493,7 @@ class UserController extends Controller
 
             return Response::make($csv->toString(), 200, $headers);
         } catch (Exception $e) {
-            return response()->json(['message' => __('vocab.empty') . $e->getMessage()], 404);
+            return response()->json(['message' => __('vocab.no_data') . $e->getMessage()], 404);
         }
     }
     //function to import users from excel or csv file
@@ -536,22 +530,32 @@ class UserController extends Controller
                 if (isset($record['firstName'], $record['lastName'], $record['email'])) {
                     // Check if the user already exists
                     $existingUser = User::where('email', $record['email'])->first();
-                    if (!$existingUser) {
+                    if ($existingUser) {
+                        $csv_summary->insertOne(['exists', implode(', ', $record), 'skipped']);
+                        $skippedCount++;
+                    } else {
                         try {
                             // create transaction to ensure data integrity
-                            DB::transaction(function () use ($record, $csv_summary, $importedCount) {
+                            DB::transaction(function () use ($record, $csv_summary, &$importedCount) {
                                 // Assign role or default to 'guest'
-                                $roleName = ($record['role'] || $record['role'] === 'admin') ?: 'guest';
+                                $roleName = $record['role'] ?? 'guest';
 
                                 $_role = Role::where('nameEn', $roleName)->latest()->first();
+                                if (!$_role) {
+                                    // If role doesn't exist, skip this record.
+                                    throw new Exception("Role '{$roleName}' not found.");
+                                }
+
                                 // Create user account
-                                $record['tag_id'] = $record['tag_id'] ?: rand(10000, 100000);
-                                $record['code'] = $record['code'] ?: rand(10000, 100000);
-                                $record['password'] = Hash::make('password');
+                                // The User model's 'creating' event will handle the ID. No need to set it here.
+                                $record['tag_id'] = $record['tag_id'] ?? rand(10000, 100000);
+                                $record['code'] = $record['code'] ?? rand(10000, 100000);
+                                $record['password'] = Hash::make($record['password'] ?? 'password');
+                                $record['email_verified_at'] = now();
                                 unset($record['role']);
 
                                 $user = User::create($record);
-                                //and add role
+                                // and add role
                                 UserRole::create([
                                     'userId' => $user->id,
                                     'roleId' => $_role->id
@@ -561,16 +565,13 @@ class UserController extends Controller
                                 $importedCount++;
                             });
                         } catch (\Exception $exception) {
-                            $csv_summary->insertOne(['error', $exception->getMessage(), 'skipped']);
-                            $skippedCount++;
+                            $csv_summary->insertOne(['error', $exception->getMessage(), 'failed']);
+                            $skippedCount++; // This is a failed/skipped import
                         }
-                    } else {
-                        $csv_summary->insertOne(['exists', implode(', ', $record), 'skipped']);
-                        $skippedCount++;
                     }
                 }
             }
-
+            
             $message = __('vocab.import_success') . ". Imported: $importedCount, Skipped (already exist): $skippedCount";
 
             File::delete(storage_path('app/public/' . $filePath));

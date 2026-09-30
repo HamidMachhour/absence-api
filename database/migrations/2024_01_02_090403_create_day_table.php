@@ -19,6 +19,7 @@ return new class extends Migration
             $table->string('nameFr')->nullable();
             $table->string('nameEn')->nullable();
             $table->string('nameZ')->nullable();
+            $table->timestamp('deleted_at')->nullable();
             $table->timestamps();
         });
     }

@@ -28,7 +28,7 @@
             {{ $message }}
         </div>
         @else
-        <div class=" text-danger">{{__('vocab.empty')}}</div>
+        <div class=" text-danger">{{__('vocab.no_data')}}</div>
         @endif
 
         <div class="btn-group mt-2">

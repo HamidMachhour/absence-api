@@ -16,7 +16,7 @@
 
 @if (auth()->user()->hasRole('admin'))
 
-<div class="d-flex justify-content-end mb-2">
+<!-- <div class="d-flex justify-content-end m-2 card-body">
 
     <form action="{{ route('roles.destroyAll') }}" method="POST" class="mr-2">
         @csrf
@@ -31,7 +31,7 @@
     <a href="{{ route('roles.create') }}" class="btn bg-gray">
         <i class="fas fa-plus"></i> {{ __('vocab.new_role') }}
     </a>
-</div>
+</div> -->
 
 <div class="card-body">
     <table class="table table-bordered">
@@ -39,7 +39,7 @@
             <tr>
                 <th>{{ __('vocab.date') }}</th>
                 <th>{{ __('vocab.role') }}</th>
-                <th>{{ __('vocab.actions') }}</th>
+                <!-- <th>{{ __('vocab.actions') }}</th> -->
             </tr>
         </thead>
         <tbody>
@@ -48,7 +48,7 @@
             <x-role-row :role="$role" />
             @empty
             <tr>
-                <td colspan="3">{{ __('vocab.empty') }}</td>
+                <td colspan="3">{{ __('vocab.no_data') }}</td>
             </tr>
             @endforelse
         </tbody>

@@ -94,7 +94,7 @@
                 </a>
             </div>
         @endif
-        <p>{{__('vocab.empty')}}</p>
+        <p>{{__('vocab.no_data')}}</p>
     @endunless
  
 @endsection

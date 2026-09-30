@@ -7,7 +7,7 @@
 namespace App\Models;
 
 use Illuminate\Support\Str;
-
+use Illuminate\Support\Facades\DB;
 use Exception;
 use DateTime;
 
@@ -29,6 +29,17 @@ class Attendance extends AbsenceModel
         'seanceId'
     ];
 
+    protected static function booted()
+    {
+        parent::boot();
+
+        static::deleting(function ($attendance) {
+            // Use a transaction to ensure data integrity
+            DB::transaction(function () use ($attendance) {
+                $attendance->attendanceStudents()->delete();
+            });
+        });
+    }
     public function attendanceStudents()
     {
         return $this->hasMany(AttendanceStudent::class, 'attendanceId');

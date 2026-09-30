@@ -1,7 +1,7 @@
 @props(['classe'])
 
 <div class="card card-primary card-outline collapsed-card" >
-    <div class="card-header">
+    <div class="card-header d-flex gap-2  {{ App::getLocale() == 'ar' ? 'flex-row-reverse' : 'flex-row' }}">
         <h3 class="card-title">{{ $classe->classeName() }}</h3>
 
         <div class="card-tools">
@@ -18,7 +18,7 @@
                 <div class="position-relative">
 
                     <a href="{{ route('classeImages.index', ['classe' => $classe->id]) }}" class="image">
-                        <img src="{{ $classe->classeImage->uri ?? asset('/assets/images/no-image.png') }}" alt="{{ $classe->classeName() }}"
+                        <img src="{{ $classe->classeImage->uri ?? asset('/assets/images/no-image-class.jpg') }}" alt="{{ $classe->classeName() }}"
                             class="img-fluid">
                     </a>
                     <div class="ribbon-wrapper ribbon">

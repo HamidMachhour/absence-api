@@ -15,6 +15,13 @@ class ProposedActionController extends Controller
      */
     public function index()
     {
+        $user = auth()->user();
+
+        // Only admins are allowed to access misconduct acts management
+        if (!$user || !$user->hasRole('admin')) {
+            redirect()->route('home')->with('message', __('vocab.not_authorized'));
+        }
+
         // Retrieve all misconduct acts for display in a listing table
         $proposed_actions = ProposedAction::all();
         
@@ -123,24 +130,12 @@ class ProposedActionController extends Controller
      */
     public function destroyAll(Request $request)
     {
-
         try {
-            // Use a transaction to ensure integrity during bulk deletion
-            
-            
-            DB::beginTransaction();
-
-             $proposedActs = DB::table('ReportProposedAction')->pluck('proposedActionId')->unique();
-
-            // Delete all roles whose IDs are NOT in the list of used roles
-            ProposedAction::whereNotIn('id', $proposedActs)->delete();
-
-            DB::commit();
-
+            // Note: This will not fire individual model events.
+            ProposedAction::query()->delete();
             return redirect()->route('proposed_actions.index')
                              ->with('success', __('vocab.proposed_actions_deleted_successfully'));
         } catch (Exception $e) {
-            DB::rollBack();
             return redirect()->back()->with('error', __('vocab.error_deleting_proposed_actions') . $e->getMessage());
         }
     }

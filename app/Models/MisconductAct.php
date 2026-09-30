@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\DB;
 
 class MisconductAct extends Model
 {
@@ -12,6 +13,16 @@ class MisconductAct extends Model
 
     protected $fillable = ['name_ar', 'name_fr', 'name_en', 'name_z'];
 
+    protected static function booted()
+    {
+
+        static::deleting(function ($misconduct_action) {
+            // Use a transaction to ensure data integrity
+            DB::transaction(function () use ($misconduct_action) {
+                $misconduct_action->reports()->detach();
+            });
+        });
+    }
     public function reports(): BelongsToMany
     {
         return $this->belongsToMany(MisconductReport::class, 'ReportMisconductAction');

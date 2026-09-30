@@ -15,7 +15,7 @@ $(document).ready(function () {
     document.getElementById('to').value = formattedToDate;
     */
 
-    $('#btn_filter').on('click', function () {
+    $('#btn_chart_filter').on('click', function () {
         getStudentChartData();
     });
 

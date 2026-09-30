@@ -2,7 +2,7 @@
 
 <div class="card card-primary card-outline collapsed-card m-1" :title="">
 
-    <div class="card-header">
+    <div class="card-header d-flex gap-2  {{ App::getLocale() == 'ar' ? 'flex-row-reverse' : 'flex-row' }}">
         <div class="card-title h3">
             <a href="{{ request()->fullUrlWithQuery(['dayId' => $seance->dayId, 'page' => 1]) }}"
                 class="flex text-blue-600 hover:text-gray-700 justify-center">

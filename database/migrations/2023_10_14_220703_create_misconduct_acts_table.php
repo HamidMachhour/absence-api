@@ -20,7 +20,7 @@ return new class extends Migration
             $table->string('name_fr', 255)->comment('Description de l\'acte / French Name')->nullable();
             $table->string('name_en', 255)->comment('Act Description / English Name')->nullable();
             $table->string('name_z', 255)->comment('ⵜⴰⴳⵎⴰⵢⵜ / Tifinagh Name')->nullable();
-
+             $table->timestamp('deleted_at')->nullable();;
             $table->timestamps();
         });
     }

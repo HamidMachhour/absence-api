@@ -34,7 +34,7 @@ class EnrollmentController extends Controller
                 ->paginate($page_size);
         } catch (Exception $e) {
 
-            return response()->json(['message' => __('vocab.empty') . $e->getMessage()], 404);
+            return response()->json(['message' => __('vocab.no_data') . $e->getMessage()], 404);
         }
     }
 
@@ -53,7 +53,7 @@ class EnrollmentController extends Controller
                 ->filter($request)->latest()
                 ->paginate($page_size);
         } catch (Exception $e) {
-            return response()->json(['message' => __('vocab.empty') . $e->getMessage()], 404);
+            return response()->json(['message' => __('vocab.no_data') . $e->getMessage()], 404);
         }
     }
     /**

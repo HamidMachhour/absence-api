@@ -28,32 +28,47 @@ class AttendanceController extends Controller
         if (auth()->user()->id !== $attendance->seance->teacherId) {
             return response()->json(['message' => __('vocab.not_authorized')], 403);
         }
-        DB::transaction(function () use ($attendance) {
-            $attendance->attendanceStudents()->delete();
-            // to allow generate new id for attendance
-            $attendance->delete();
-        });
+        // to allow generate new id for attendance
+        $attendance->delete();
 
         return response()->json(['message' => __('vocab.delete_success')], 200);
     }
 
     public function attendanceToAbsence(Attendance $attendance)
     {
+        // 1. Authorization Check (No change needed - this is correct)
         if (!Auth::check() || auth()->user()->id !== $attendance->seance->teacherId) {
             return response()->json(['message' => __('vocab.not_authorized')], 403);
         }
 
-        try {
-            DB::transaction(function () use ($attendance) {
+        // Get the related students *once*
+        $attendanceStudents = $attendance->attendanceStudents;
 
-                // 1. Create the Absence record
+        // 2. NEW: Check if there are students to process (AttendanceStudents > 0)
+        if ($attendanceStudents->isEmpty()) {
+            // Logically, if the attendance is empty, there's nothing to convert to absence.
+            // We can still clean up the parent Attendance record if desired, but 
+            // the core transaction for moving data should be skipped.
+
+            // OPTION A: Simply delete the empty Attendance record and return success.
+            $attendance->delete();
+            return response()->json(['message' => __('vocab.action_success') . ' (Empty attendance record deleted)'], 200);
+
+            // OPTION B: Return success without deleting, assuming the calling job handles clean up.
+            // return response()->json(['message' => __('vocab.action_success') . ' (No students to process)'], 200);
+        }
+
+        try {
+            DB::transaction(function () use ($attendance, $attendanceStudents) {
+
+                // 1. Create the Absence record (New parent record)
                 $absence = Absence::create([
                     'seanceId' => $attendance->seanceId,
                     'created_at' => $attendance->created_at
                 ]);
 
-                // 2. Prepare bulk insert data for AbsenceStudent
-                $bulkInsert = $attendance->attendanceStudents->map(function ($a) use ($absence) {
+                // 2. Prepare bulk insert data for AbsenceStudent (Mapping from AttendanceStudent)
+                $bulkInsert = $attendanceStudents->map(function ($a) use ($absence) {
                     return [
                         'id' => Str::uuid(),
                         'studentId' => $a->studentId,
@@ -61,22 +76,26 @@ class AttendanceController extends Controller
                         'plage' => $a->plage,
                         'justification' => $a->justification,
                         'created_at' => $a->created_at,
-                        'updated_at' => now(), // required if your table uses timestamps
+                        'updated_at' => now(),
                     ];
                 })->toArray();
 
                 // 3. Bulk insert into absence_students
                 AbsenceStudent::insert($bulkInsert);
 
-                // 4. Delete all attendanceStudents in a single query
+                // 4. Delete all attendanceStudents in a single query (Cleanup child records)
+                // Use the loaded collection to avoid a second query if possible, 
+                // but deleting via the relationship is cleaner.
                 $attendance->attendanceStudents()->delete();
 
-                // 5. Delete the attendance record itself
+                // 5. Delete the attendance record itself (Cleanup parent record)
                 $attendance->delete();
             });
 
             return response()->json(['message' => __('vocab.action_success')], 200);
         } catch (Exception $e) {
+            // Log the error for debugging
+            Log::error("Failed to convert Attendance to Absence: {$e->getMessage()}");
             return response()->json(['message' => __('vocab.action_failed') . ': ' . $e->getMessage()], 403);
         }
     }
@@ -114,6 +133,11 @@ class AttendanceController extends Controller
 
             // 7. Check if a record was actually deleted.
             if ($deletedCount > 0) {
+                // if attendance list is emptied after deletion, delete attendance record
+                if ($attendance->attendanceStudents()->count() === 0) {
+                    $attendance->delete();
+                    return response()->json(['message' => __('vocab.delete_success')], 201);
+                }
                 return response()->json(['message' => __('vocab.delete_success')], 200);
             } else {
                 // A record was not found to be deleted.
@@ -140,8 +164,14 @@ class AttendanceController extends Controller
             return response()->json(['message' => __('vocab.not_authorized')], 403);
         }
 
-        if ($attendance_student->delete())
+        if ($attendance_student->delete()) {
+            // if attendance list is emptied after deletion, delete attendance record
+            if ($attendance_student->attendance->attendanceStudents()->count() === 0) {
+                $attendance_student->attendance->delete();
+                return response()->json(['message' => __('vocab.delete_success')], 201);
+            }
             return response()->json(['message' => __('vocab.delete_success')], 200);
+        }
 
         return response()->json(['message' => __('vocab.delete_failed')], 404);
     }
@@ -247,10 +277,13 @@ class AttendanceController extends Controller
     public function refreshAttendance(Attendance $attendance)
     {
 
+        // If the attendance has no students, ensure an attendance record exists for the seance.
+        // This will create one if it was deleted, or just return the existing empty one.
+        if ($attendance->attendanceStudents()->doesntExist()) {
+            return Attendance::firstOrCreate(['seanceId' => $attendance->seanceId]);
+        }
 
-        //return Attendance::where('id',$attendance->id)->first(); //or
-        return $attendance->fresh('attendanceStudents'); // reload relation
-
-
+        // Otherwise, return the attendance with a fresh list of students.
+        return $attendance->fresh('attendanceStudents');
     }
 }

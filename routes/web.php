@@ -29,12 +29,16 @@ use App\Http\Controllers\Web\EnrollmentController;
 use App\Http\Controllers\Web\SubjectController;
 use Illuminate\Support\Facades\App;
 use App\Http\Controllers\Web\MessageController;
+use App\Models\SchoolConfiguration;
 use App\Http\Controllers\Web\FriendshipController;
 use App\Http\Controllers\Web\SchoolConfigurationController;
 
 use App\Http\Controllers\Web\MisconductActController;
 use App\Http\Controllers\Web\ProposedActionController;
 use App\Http\Controllers\Web\MisconductReportController;
+
+use App\Http\Controllers\Web\TerminalController;
+
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -89,7 +93,16 @@ Route::get('/', function () {
         auth()->logout();
     }
 
-    return view('home');
+    $schoolConfig = SchoolConfiguration::getSettings();
+    if (!$schoolConfig) {
+        // If school is not configured, only redirect to settings if an admin is logged in.
+        // Otherwise, redirect to login to prevent a redirect loop for guests.
+        if (Auth::check() && Auth::user()->hasRole('admin')) {
+            return redirect()->route('settings.school.edit')->with('message', __('vocab.school_settings'));
+        }
+        return redirect()->route('users.login');
+    }
+    return view('home', ['schoolConfig' => $schoolConfig]);
 })->name('home');
 
 
@@ -183,6 +196,8 @@ Route::group(['prefix' => 'classes', 'middleware' => 'auth'], function () {
     Route::put('/{classe}/update', [ClasseController::class, 'update'])->name("classes.update");
     Route::get('/{classe}/edit', [ClasseController::class, 'edit'])->name('classes.edit');
     Route::post('/{classe}/default', [ClasseController::class, 'setDefault'])->name('classes.default');
+    //empty classe
+    Route::post('/{classe}/empty', [ClasseController::class, 'emptyClasse'])->name("classes.empty");
 });
 
 Route::group(['prefix' => 'students', 'middleware' => 'auth'], function () {
@@ -348,6 +363,8 @@ Route::group(['prefix' => 'admin', 'middleware' => 'adminauth'], function () {
 
     // Route to handle the POST/PUT request to save settings
     Route::put('/settings/school', [SchoolConfigurationController::class, 'update'])->name('settings.school.update');
+
+    Route::get('/run-attendance-tasks', [AttendanceController::class, 'manualPeriodicTasks'])->name('run.attendance.tasks');
 });
 
 
@@ -421,34 +438,22 @@ Route::group(['prefix' => 'misconduct_acts', 'middleware' => 'adminauth'], funct
 });
 
 // misconduct reports route
-Route::group(['prefix' => 'misconduct_reports', 'middleware' => 'adminauth'], function () {
+Route::group(['prefix' => 'misconduct_reports', 'middleware' => 'auth'], function () {
 
     // R - Index (List all reports)
     Route::get('/', [MisconductReportController::class, 'index'])->name("misconduct_reports.index");
 
-    // C - Create Form
-    Route::get('/create', [MisconductReportController::class, 'create'])->name('misconduct_reports.create');
-
     // C - Store New Report (Using POST)
     Route::post('/', [MisconductReportController::class, 'store'])->name('misconduct_reports.store');
-
-    // Bulk Delete (Specific to your style)
-    Route::delete('/destroyAll', [MisconductReportController::class, 'destroyAll'])->name('misconduct_reports.destroyAll');
 
     //studentlist
     Route::get('/{seance}/studentList', [MisconductReportController::class, 'studentList'])->name('misconduct_reports.studentList');
 
     // U - Edit Form
     Route::get('/{misconduct_report}/edit', [MisconductReportController::class, 'edit'])->name('misconduct_reports.edit');
-  
-    // print report 
-    Route::get('/{misconduct_report}/print', [MisconductReportController::class, 'print'])->name('misconduct_reports.print');
 
     // show preview
     Route::get('/{misconduct_report}/show', [MisconductReportController::class, 'show'])->name('misconduct_reports.show');
-
-      // update status
-    Route::post('/{misconduct_report}/updateStatus', [MisconductReportController::class, 'updateStatus'])->name('misconduct_reports.updateStatus');
 
     // U - Update Existing Report (Using PUT)
     Route::put('/{misconduct_report}', [MisconductReportController::class, 'update'])->name('misconduct_reports.update');
@@ -518,7 +523,8 @@ Route::group(['prefix' => 'admin'], function () {
 });
 
 Route::get('/get-students/{classe}', [StudentController::class, 'getStudents']);
-Route::get('/chart-absence', [AbsenceController::class, 'getChartData']);
+Route::get('/chart-absence', [AbsenceController::class, 'getChartAbsenceData']);
+Route::get('/chart-report', [AbsenceController::class, 'getChartMisconductReportData']);
 
 // Language Switcher Route
 Route::get('/language/{lang}', function ($lang) {
@@ -528,3 +534,25 @@ Route::get('/language/{lang}', function ($lang) {
     }
     return redirect()->back();
 })->name('language.switch');
+
+/*
++|--------------------------------------------------------------------------
++| Terminal / Kiosk Mode Routes
++|--------------------------------------------------------------------------
++|
++| These routes are for a simplified terminal view, intended for display
++| screens in classrooms (salles).
++|
++*/
+
+
+Route::group(['prefix' => 'terminal', 'as' => 'terminal.'], function () {
+ 
+    // Room selection and dashboard (requires auth + terminal role)
+    Route::middleware(['auth','terminal'])->group(function () {
+        Route::get('/find', [TerminalController::class, 'findAttendanceBySalle'])->name('find');
+        Route::get('/select-room', [TerminalController::class, 'selectRoom'])->name('selectRoom');
+        Route::get('/dashboard', [TerminalController::class, 'dashboard'])->name('dashboard');
+        Route::get('/check-next', [TerminalController::class, 'checkNextAttendance'])->name('checkNext');
+    });
+});

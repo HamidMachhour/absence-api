@@ -22,7 +22,7 @@
     <x-absence-row :absence="$absence" />
     @unless (($absenceStudents = $absence->absenceStudents()->paginate(40))->count() == 0)
         <div class="card mx-3">
-            <div class="card-header">
+            <div class="card-header d-flex gap-2  {{ App::getLocale() == 'ar' ? 'flex-row-reverse' : 'flex-row' }}">
                 <div class=" h4">{{__('vocab.number')}}: {{ $absenceStudents->count() }}</div>
             </div>
             <div class="card-body">
@@ -37,7 +37,7 @@
             </div>
         </div>
     @else
-        <p>{{__('vocab.empty')}}</p>
+        <p>{{__('vocab.no_data')}}</p>
     @endunless
 @endsection
 

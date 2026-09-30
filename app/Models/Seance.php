@@ -4,8 +4,7 @@ namespace App\Models;
 
 use DateTime;
 use Illuminate\Http\Request;
-use Illuminate\Database\Eloquent\SoftDeletes;
-
+use Illuminate\Support\Facades\DB;
 
 /**
  * Class Seance
@@ -27,7 +26,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Seance extends AbsenceModel
 {
-    use SoftDeletes;
+    
     protected $table = 'Seance';
 
 
@@ -40,6 +39,22 @@ class Seance extends AbsenceModel
         'a',
     ];
 
+
+    protected static function booted()
+    {
+        parent::boot();
+
+        static::deleting(function ($seance) {
+            // Use a transaction to ensure data integrity
+            DB::transaction(function () use ($seance) {
+                $seance->absences->each->delete(); // This will trigger cascading deletes on AbsenceStudent
+                $seance->attendances->each->delete();
+                $seance->reports->each->delete();
+            });
+        });
+    }
+
+ 
     public function plageInMinutes()
     {
         // Create DateTime objects directly from the string values of $this->de and $this->a
@@ -163,5 +178,10 @@ class Seance extends AbsenceModel
     public function teacher()
     {
         return $this->belongsTo(User::class, 'teacherId');
+    }
+
+    public function reports()
+    {
+        return $this->hasMany(MisconductReport::class, 'seanceId');
     }
 }

@@ -33,7 +33,7 @@ use BaconQrCode\Renderer\RendererStyle\RendererStyle;
  */
 class Student extends AbsenceModel
 {
-    use SoftDeletes;
+
 
     protected $table = 'Student';
 
@@ -47,6 +47,21 @@ class Student extends AbsenceModel
         'userId',
         'classeId',
     ];
+
+    protected static function booted()
+    {
+        parent::boot();
+
+        static::deleting(function ($student) {
+            // Use a transaction to ensure data integrity
+            DB::transaction(function () use ($student) {
+                $student->misconductReports()->delete();
+                $student->absences()->delete();
+                $student->attendances()->delete();
+            });
+        });
+    }
+
     public function scopeFilter($query, Request $request)
     {
 
@@ -70,35 +85,29 @@ class Student extends AbsenceModel
             $q->orWhere('num', $request->search);
         });
 
-        if ($request->filled('minPlage') && $request->filled('maxPlage')) {
+        if ($request->filled('minPlage') || $request->filled('maxPlage')) {
             $maxPlage = floatval($request->maxPlage);
             $minPlage = floatval($request->minPlage);
-            if ($minPlage > $maxPlage) {
+            if ($request->filled('minPlage') && $request->filled('maxPlage') && $minPlage > $maxPlage) {
                 $t = $minPlage;
                 $minPlage = $maxPlage;
                 $maxPlage = $t;
             }
-            $query->havingBetween(DB::raw('sum("AbsenceStudent".plage)'), [$minPlage, $maxPlage]);
-        } elseif ($request->filled('minPlage')) {
-            $query->having(DB::raw('sum("AbsenceStudent".plage)'), '>=', floatval($request->minPlage));
-        } elseif ($request->filled('maxPlage')) {
-            $query->having(DB::raw('sum("AbsenceStudent".plage)'), '<=', floatval($request->maxPlage));
+            $query->when($request->filled('minPlage'), fn($q) => $q->having('absences_sum_plage', '>=', $minPlage));
+            $query->when($request->filled('maxPlage'), fn($q) => $q->having('absences_sum_plage', '<=', $maxPlage));
         }
 
 
-        if ($request->filled('minAbsences') && $request->filled('maxAbsences')) {
+        if ($request->filled('minAbsences') || $request->filled('maxAbsences')) {
             $maxAbsences = floatval($request->maxAbsences);
             $minAbsences = floatval($request->minAbsences);
-            if ($minAbsences > $maxAbsences) {
+            if ($request->filled('minAbsences') && $request->filled('maxAbsences') && $minAbsences > $maxAbsences) {
                 $t = $minAbsences;
                 $minAbsences = $maxAbsences;
                 $maxAbsences = $t;
             }
-            $query->havingBetween(DB::raw('count(studentId)'), [$minAbsences, $maxAbsences]);
-        } elseif ($request->filled('minAbsences')) {
-            $query->having(DB::raw('count(studentId)'), '>=', floatval($request->minAbsences));
-        } elseif ($request->filled('maxAbsences')) {
-            $query->having(DB::raw('count(studentId)'), '<=', floatval($request->maxAbsences));
+            $query->when($request->filled('minAbsences'), fn($q) => $q->having('absences_count', '>=', $minAbsences));
+            $query->when($request->filled('maxAbsences'), fn($q) => $q->having('absences_count', '<=', $maxAbsences));
         }
 
         if ($request->filled('orderBy')) {
@@ -109,7 +118,13 @@ class Student extends AbsenceModel
         return $query;
     }
 
-    
+
+
+    public function misconductReports()
+    {
+        return $this->hasMany(MisconductReport::class, 'studentId');
+    }
+
     public function setAbsencesSumPlageAttribute($value)
     {
         $this->attributes['absences_sum_plage'] = $value ?? 0.0;

@@ -38,7 +38,7 @@
             </div>
         </div>
     @else
-        <p>{{__('vocab.empty')}}</p>
+        <p>{{__('vocab.no_data')}}</p>
     @endunless
 @endsection
 

@@ -26,7 +26,7 @@ return new class extends Migration
             $table->unsignedBigInteger('reply_to')->nullable();
             // Status: 'read' or 'unread'
             $table->enum('status', ['read', 'unread','source_archived', 'destination_archived', 'both_archived'])->default('unread');
-            $table->text('deleted_at')->nullable();
+             $table->timestamp('deleted_at')->nullable();;
             $table->timestamps();
 
             // Add an index for quicker lookup of conversations

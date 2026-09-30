@@ -50,7 +50,7 @@ class ClasseImageController extends Controller
                     ->paginate($page_size);
             }
         } catch (Exception $e) {
-            return response()->json(['message' => __('vocab.empty') . $e->getMessage()], 404);
+            return response()->json(['message' => __('vocab.no_data') . $e->getMessage()], 404);
         }
     }
 
@@ -145,7 +145,7 @@ class ClasseImageController extends Controller
             // Return a response
             return response()->json(['message' => 'Deleted successfully'], 201);
         } catch (Exception $e) {
-            return response()->json(['message' => __('vocab.empty') . $e->getMessage()], 404);
+            return response()->json(['message' => __('vocab.no_data') . $e->getMessage()], 404);
         }
     }
 

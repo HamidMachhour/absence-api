@@ -26,7 +26,7 @@ class CreateFkStudentCandidateTable extends Migration
      */
     public function down()
     {
-        Schema::table('Student', function (Blueprint $table) {
+        Schema::table('Enrollment', function (Blueprint $table) {
             $table->dropForeign(['classeId']);
             $table->dropForeign(['userId']);
         });

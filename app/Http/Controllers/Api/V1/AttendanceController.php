@@ -5,18 +5,131 @@ namespace App\Http\Controllers\Api\V1;
 use Exception;
 use App\Models\Attendance;
 use App\Models\Absence;
+use App\Models\Seance;
 use App\Models\Student;
 use App\Models\AttendanceStudent;
 use Illuminate\Http\Request;
 use App\Models\AbsenceStudent;
 use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
+use App\Services\MqttNotificationService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use Carbon\Carbon;
 
 class AttendanceController extends Controller
 {
+
+    protected MqttNotificationService $mqttNotificationService;
+
+    public function __construct(MqttNotificationService $mqttNotificationService)
+    {
+        $this->mqttNotificationService = $mqttNotificationService;
+    }
+
+    protected function shouldConvertToAbsenceNow(Seance $seance, ?string $timestamp = null): bool
+    {
+        $reference = $timestamp ? Carbon::parse($timestamp) : now();
+
+        return $reference->format('H:i:s') >= Carbon::parse($seance->a)->format('H:i:s');
+    }
+
+    protected function publishAttendanceUpdatedEvent(Seance $seance, array $absentStudentIds): void
+    {
+        $topic = 'attendance/updated/' . ($seance->salle ?: 'unknown');
+
+        $this->mqttNotificationService->publish($topic, [
+            'event' => 'attendance_updated',
+            'seance_id' => $seance->id,
+            'salle' => $seance->salle,
+            'absent_student_ids' => array_values($absentStudentIds),
+            'updated_at' => now()->toDateTimeString(),
+        ]);
+    }
+
+    public function submitForSeance(Request $request, Seance $seance)
+    {
+        if (!Auth::check() || Auth::id() !== $seance->teacherId) {
+            return response()->json(['message' => __('vocab.not_authorized')], 403);
+        }
+
+        $validatedData = $request->validate([
+            'absent_student_ids' => ['required', 'array'],
+            'absent_student_ids.*' => ['string'],
+            'timestamp' => ['nullable', 'date'],
+            'finalize' => ['nullable', 'boolean'],
+        ]);
+
+        // Mobile submission is treated as final by default.
+        $finalize = array_key_exists('finalize', $validatedData)
+            ? (bool) $validatedData['finalize']
+            : true;
+
+        $classStudentIds = Student::where('classeId', $seance->classeId)->pluck('id')->all();
+        $classStudentIdMap = array_fill_keys($classStudentIds, true);
+
+        $absentStudentIds = array_values(array_filter(
+            array_unique($validatedData['absent_student_ids']),
+            fn($studentId) => isset($classStudentIdMap[$studentId])
+        ));
+
+        try {
+            $attendance = DB::transaction(function () use ($seance, $absentStudentIds) {
+                $attendance = Attendance::firstOrCreate(['seanceId' => $seance->id]);
+                $attendance->attendanceStudents()->delete();
+
+                if (!empty($absentStudentIds)) {
+                    $plage = $seance->plageInMinutes();
+                    $now = now();
+
+                    $rows = array_map(function ($studentId) use ($attendance, $plage, $now) {
+                        return [
+                            'id' => (string) Str::uuid(),
+                            'attendanceId' => $attendance->id,
+                            'studentId' => $studentId,
+                            'plage' => $plage,
+                            'created_at' => $now,
+                            'updated_at' => $now,
+                        ];
+                    }, $absentStudentIds);
+
+                    AttendanceStudent::insert($rows);
+                }
+
+                return $attendance;
+            });
+
+            $attendance->refresh();
+            $absenceCreated = false;
+
+            if ($finalize || $this->shouldConvertToAbsenceNow($seance, $validatedData['timestamp'] ?? null)) {
+                $conversionResponse = $this->attendanceToAbsence($attendance);
+
+                if ($conversionResponse->getStatusCode() !== 200) {
+                    return $conversionResponse;
+                }
+
+                $absenceCreated = true;
+            }
+
+            $this->publishAttendanceUpdatedEvent($seance, $absentStudentIds);
+
+            return response()->json([
+                'message' => __('vocab.action_success'),
+                'seance_id' => $seance->id,
+                'attendance_id' => $attendance->id,
+                'absent_student_ids' => $absentStudentIds,
+                'absence_created' => $absenceCreated,
+            ], 200);
+        } catch (Exception $exception) {
+            Log::error('Failed to submit seance attendance: ' . $exception->getMessage());
+
+            return response()->json([
+                'message' => __('vocab.action_failure') . ' ' . __('vocab.try_again'),
+            ], 500);
+        }
+    }
 
     public function clear(Attendance $attendance)
     {

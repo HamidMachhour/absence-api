@@ -340,6 +340,7 @@ Route::group(['prefix' => 'user-images', 'middleware' => 'auth'], function () {
 
     // 1. Most specific static routes first
     Route::post('/store', [UserImageController::class, 'store'])->name('userImages.store');
+    Route::post('/{user}/capture', [UserImageController::class, 'capture'])->name('userImages.capture');
 
     // 2. Wildcard routes with static segments
     Route::get('/{user}/create', [UserImageController::class, 'create'])->name('userImages.create');

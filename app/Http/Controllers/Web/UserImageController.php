@@ -7,10 +7,26 @@ use App\Models\UserImage;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Storage;
 use App\Http\Controllers\Api\V1\UserImageController as V1UserImageController;
 
 class UserImageController extends Controller
 {
+    protected function syncPublicStorageFile(string $relativePath, string $binaryImage): void
+    {
+        $publicStoragePath = public_path('storage');
+
+        if (is_link($publicStoragePath)) {
+            return;
+        }
+
+        $publicFilePath = $publicStoragePath . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $relativePath);
+
+        File::ensureDirectoryExists(dirname($publicFilePath));
+        File::put($publicFilePath, $binaryImage);
+    }
+
        /**
      * Display a listing of the resource.
      *
@@ -90,6 +106,57 @@ class UserImageController extends Controller
         }else{
             $message = isset($data['message']) ? $data['message'] : __('vocab.action_failure').' '.__('vocab.try_again');
             return back()->withErrors(['message' => $message]);;
+        }
+    }
+
+    public function capture(Request $request, User $user)
+    {
+        /** @var User|null $authenticatedUser */
+        $authenticatedUser = Auth::user();
+
+        if (!$authenticatedUser || ($authenticatedUser->id !== $user->id && !$authenticatedUser->hasRole('admin'))) {
+            return response()->json(['message' => __('vocab.not_authorized')], 403);
+        }
+
+        $validated = $request->validate([
+            'image' => ['required', 'string', 'regex:/^data:image\/(png|jpeg|jpg);base64,/i'],
+        ]);
+
+        try {
+            $base64Image = preg_replace('/^data:image\/(png|jpeg|jpg);base64,/i', '', $validated['image']);
+            $binaryImage = base64_decode(str_replace(' ', '+', $base64Image));
+
+            if ($binaryImage === false) {
+                return response()->json(['message' => __('vocab.action_failure')], 422);
+            }
+
+            // A deterministic filename ensures each retake replaces the previous stored image.
+            $relativePath = 'user-images/captured/user_' . $user->id . '.jpg';
+            Storage::disk('public')->put($relativePath, $binaryImage);
+            $this->syncPublicStorageFile($relativePath, $binaryImage);
+            $uri = Storage::url($relativePath);
+
+            $userImage = UserImage::where('userId', $user->id)
+                ->where('uri', $uri)
+                ->first();
+
+            if (!$userImage) {
+                $userImage = UserImage::create([
+                    'userId' => $user->id,
+                    'uri' => $uri,
+                ]);
+            }
+
+            if (!$user->imageId) {
+                $user->update(['imageId' => $userImage->id]);
+            }
+
+            return response()->json([
+                'message' => __('vocab.action_success'),
+                'uri' => $uri,
+            ], 201);
+        } catch (\Throwable $e) {
+            return response()->json(['message' => __('vocab.task_failed') . ' ' . __('vocab.try_again')], 500);
         }
     }
 

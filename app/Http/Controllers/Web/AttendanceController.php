@@ -12,11 +12,24 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\Api\V1\AttendanceController as V1AttendanceController;
+use App\Services\MqttNotificationService;
 use DateTime;
 use Illuminate\Support\Facades\Log;
 
 class AttendanceController extends Controller
 {
+
+    private static function publishSeanceStartingAlert(Seance $seance): void
+    {
+        $mqtt = app(MqttNotificationService::class);
+
+        $mqtt->publish('teacher/' . $seance->teacherId . '/seances', [
+            'event' => 'seance_starting',
+            'seance_id' => $seance->id,
+            'salle' => $seance->salle,
+            'message' => 'Your class in Salle ' . ($seance->salle ?: 'unknown') . ' is starting.',
+        ]);
+    }
 
     public function checklist(Seance $seance)
     {
@@ -36,6 +49,10 @@ class AttendanceController extends Controller
                 ->whereNotIn('id', $absentStudentIds)
                 ->orderBy('num')
                 ->paginate(40);
+<<<<<<< HEAD
+=======
+
+>>>>>>> 7cfde7274412376bfe0117da5f7625213cc6378a
 
             return view('attendances.checklist', [
                 'students' => $students,
@@ -334,6 +351,10 @@ class AttendanceController extends Controller
 
                     // Call the API controller method to fill the attendance list
                     $controller->pushAllStudents($request, $attendance);
+<<<<<<< HEAD
+=======
+                    self::publishSeanceStartingAlert($seance);
+>>>>>>> 7cfde7274412376bfe0117da5f7625213cc6378a
 
                     $logMessage = "Successfully pre-filled attendance for seance ID: {$seance->id}";
                     Log::info($logMessage);

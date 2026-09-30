@@ -9,6 +9,7 @@ namespace App\Models;
 use DateTime;
 use App\Models\AbsenceModel;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Str;
 
 /**
  * Class StudentImage
@@ -24,12 +25,28 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class StudentImage extends AbsenceModel
 {
 	protected $table = 'StudentImage';
+<<<<<<< HEAD
     
+=======
+>>>>>>> 7cfde7274412376bfe0117da5f7625213cc6378a
 
 	protected $fillable = [
 		'studentId',
 		'uri'
 	];
+
+	public function getUriAttribute($value)
+	{
+		if (!$value) {
+			return $value;
+		}
+
+		if (filter_var($value, FILTER_VALIDATE_URL) || Str::startsWith($value, ['//', 'data:'])) {
+			return $value;
+		}
+
+		return asset(ltrim($value, '/'));
+	}
 
     public function student()
     {

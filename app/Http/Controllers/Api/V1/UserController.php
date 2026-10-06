@@ -186,6 +186,8 @@ class UserController extends Controller
     public function login(Request $request)
     {
         try {
+            $request->merge(['email' => trim((string) $request->input('email'))]);
+
             // 1. Validate the incoming request data.
             $credentials = $request->validate([
                 'email' => ['required', 'string', 'email'],
@@ -195,20 +197,45 @@ class UserController extends Controller
             // 2. Find the user by credentials.
             $user = User::where('email', $credentials['email'])->first();
 
-            // 3. Manually verify password and check user existence.
-            if (!$user || !Hash::check($credentials['password'], $user->password)) {
+            // 3. Verify the password and upgrade legacy or outdated hashes.
+            $passwordMatches = false;
+            $needsPasswordUpgrade = false;
+            if ($user) {
+                $storedPassword = (string) $user->password;
+
+                try {
+                    $passwordMatches = Hash::check($credentials['password'], $storedPassword);
+                } catch (\Throwable $exception) {
+                    $passwordMatches = false;
+                }
+
+                if (!$passwordMatches && password_get_info($storedPassword)['algo'] === null
+                    && hash_equals($storedPassword, $credentials['password'])) {
+                    $passwordMatches = true;
+                    $needsPasswordUpgrade = true;
+                } elseif ($passwordMatches && Hash::needsRehash($storedPassword)) {
+                    $needsPasswordUpgrade = true;
+                }
+            }
+
+            if (!$user || !$passwordMatches) {
                 // Throw a ValidationException for credentials mismatch (Authentication Failure)
                 throw ValidationException::withMessages([
                     'email' => __('vocab.credentials_mismatch'),
                 ]);
             }
 
+            if ($needsPasswordUpgrade) {
+                $user->password = Hash::make($credentials['password']);
+                $user->save();
+            }
+
             // 4. Check if the email is verified.
-            if (!isset($user->email_verified_at)) {
-                // Throw a ValidationException for unverified email
-                throw ValidationException::withMessages([
-                    'email' => __('vocab.email_not_verified'),
-                ]);
+            if (!$user->email_verified_at) {
+                return response()->json([
+                    'message' => __('vocab.email_not_verified'),
+                    'errors' => ['email' => [__('vocab.email_not_verified')]],
+                ], 401);
             }
 
             // 5. Delete all previous tokens (Sanctum/API standard).
@@ -523,56 +550,85 @@ class UserController extends Controller
             $records = $csv->getRecords(); // Get all records as an iterator object
 
             $importedCount = 0;
+            $updatedCount = 0;
             $skippedCount = 0;
 
             foreach ($records as $record) {
                 // Validate each record
                 if (isset($record['firstName'], $record['lastName'], $record['email'])) {
-                    // Check if the user already exists
-                    $existingUser = User::where('email', $record['email'])->first();
-                    if ($existingUser) {
-                        $csv_summary->insertOne(['exists', implode(', ', $record), 'skipped']);
-                        $skippedCount++;
-                    } else {
-                        try {
-                            // create transaction to ensure data integrity
-                            DB::transaction(function () use ($record, $csv_summary, &$importedCount) {
-                                // Assign role or default to 'guest'
-                                $roleName = $record['role'] ?? 'guest';
+                    try {
+                        DB::transaction(function () use ($record, $csv_summary, &$importedCount, &$updatedCount, &$skippedCount) {
+                            $record['email'] = trim($record['email']);
+                            $user = User::firstOrNew(['email' => $record['email']]);
+                            $isNewUser = !$user->exists;
 
+                            // Assign a role or default new users to 'guest'.
+                            $roleName = $record['role'] ?? ($isNewUser ? 'guest' : null);
+                            $_role = null;
+
+                            if ($roleName !== null) {
                                 $_role = Role::where('nameEn', $roleName)->latest()->first();
                                 if (!$_role) {
-                                    // If role doesn't exist, skip this record.
                                     throw new Exception("Role '{$roleName}' not found.");
                                 }
+                            }
 
-                                // Create user account
-                                // The User model's 'creating' event will handle the ID. No need to set it here.
-                                $record['tag_id'] = $record['tag_id'] ?? rand(10000, 100000);
-                                $record['code'] = $record['code'] ?? rand(10000, 100000);
-                                $record['password'] = Hash::make($record['password'] ?? 'password');
-                                $record['email_verified_at'] = now();
-                                unset($record['role']);
+                            $userData = $record;
+                            unset($userData['role'], $userData['password'], $userData['email_verified_at']);
+                            $user->fill($userData);
 
-                                $user = User::create($record);
-                                // and add role
-                                UserRole::create([
-                                    'userId' => $user->id,
-                                    'roleId' => $_role->id
-                                ]);
+                            if (array_key_exists('code', $record)) {
+                                $user->code = $record['code'];
+                            } elseif ($isNewUser) {
+                                $user->code = rand(10000, 100000);
+                            }
+                            if (array_key_exists('tag_id', $record)) {
+                                $user->tag_id = $record['tag_id'];
+                            } elseif ($isNewUser) {
+                                $user->tag_id = rand(10000, 100000);
+                            }
 
-                                $csv_summary->insertOne(['new', $user->id, 'imported']);
+                            if ($isNewUser) {
+                                $user->password = Hash::make($record['password'] ?? 'password');
+                                $user->email_verified_at = now();
+                            } elseif (isset($record['password']) && trim($record['password']) !== '') {
+                                $user->password = Hash::make($record['password']);
+                                $user->email_verified_at = now();
+                            }
+
+                            $user->save();
+
+                            if ($_role) {
+                                $userRole = UserRole::where('userId', $user->id)->first();
+                                if ($userRole) {
+                                    $userRole->update(['roleId' => $_role->id]);
+                                } else {
+                                    UserRole::create([
+                                        'userId' => $user->id,
+                                        'roleId' => $_role->id
+                                    ]);
+                                }
+                            }
+
+                            $csv_summary->insertOne([
+                                $isNewUser ? 'new' : 'update',
+                                $user->id,
+                                $isNewUser ? 'imported' : 'updated'
+                            ]);
+                            if ($isNewUser) {
                                 $importedCount++;
-                            });
-                        } catch (\Exception $exception) {
-                            $csv_summary->insertOne(['error', $exception->getMessage(), 'failed']);
-                            $skippedCount++; // This is a failed/skipped import
-                        }
+                            } else {
+                                $updatedCount++;
+                            }
+                        });
+                    } catch (\Exception $exception) {
+                        $csv_summary->insertOne(['error', $exception->getMessage(), 'failed']);
+                        $skippedCount++; // This is a failed/skipped import
                     }
                 }
             }
             
-            $message = __('vocab.import_success') . ". Imported: $importedCount, Skipped (already exist): $skippedCount";
+            $message = __('vocab.import_success') . ". Imported: $importedCount, Updated: $updatedCount, Failed: $skippedCount";
 
             File::delete(storage_path('app/public/' . $filePath));
 
@@ -580,6 +636,7 @@ class UserController extends Controller
                 'Content-Type' => 'text/csv',
                 'Content-Disposition' => 'attachment; filename=' . $fileName_summary,
                 'imported' => $importedCount,
+                'updated' => $updatedCount,
                 'skipped' => $skippedCount,
                 'message' => $message
             ];

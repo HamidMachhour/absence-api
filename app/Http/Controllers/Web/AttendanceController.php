@@ -49,7 +49,10 @@ class AttendanceController extends Controller
                 ->whereNotIn('id', $absentStudentIds)
                 ->orderBy('num')
                 ->paginate(40);
+<<<<<<< HEAD
+=======
 
+>>>>>>> 7cfde7274412376bfe0117da5f7625213cc6378a
 
             return view('attendances.checklist', [
                 'students' => $students,
@@ -348,7 +351,10 @@ class AttendanceController extends Controller
 
                     // Call the API controller method to fill the attendance list
                     $controller->pushAllStudents($request, $attendance);
+<<<<<<< HEAD
+=======
                     self::publishSeanceStartingAlert($seance);
+>>>>>>> 7cfde7274412376bfe0117da5f7625213cc6378a
 
                     $logMessage = "Successfully pre-filled attendance for seance ID: {$seance->id}";
                     Log::info($logMessage);

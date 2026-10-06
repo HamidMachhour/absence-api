@@ -25,6 +25,10 @@ use Illuminate\Support\Str;
 class StudentImage extends AbsenceModel
 {
 	protected $table = 'StudentImage';
+<<<<<<< HEAD
+    
+=======
+>>>>>>> 7cfde7274412376bfe0117da5f7625213cc6378a
 
 	protected $fillable = [
 		'studentId',

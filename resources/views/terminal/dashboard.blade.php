@@ -44,12 +44,17 @@
     <!-- QR Scanner Dialog -->
     <div id="dialog" class="mx-4 p-4 bg-white rounded-lg shadow-md">
         <div class="flex flex-col items-center space-y-3">
+<<<<<<< HEAD
+            <!-- Video Preview -->
+            <div id="qr-reader" class="w-full max-w-sm"></div>
+=======
             @if(!($terminalReadOnly ?? false))
                 <!-- Video Preview -->
                 <div id="qr-reader" class="w-full max-w-sm"></div>
             @else
                 <p class="text-muted">{{ __('vocab.no_attendance_data') }} (read-only finalized absence view)</p>
             @endif
+>>>>>>> 7cfde7274412376bfe0117da5f7625213cc6378a
 
             <!-- Flash Message -->
             @if(session('message'))
@@ -70,6 +75,8 @@
 
 @section('scripts')
 
+<<<<<<< HEAD
+=======
 @php
     $terminalReadOnlyFlag = $terminalReadOnly ?? false;
     $popStudentBaseUrlValue = $terminalReadOnlyFlag
@@ -80,6 +87,7 @@
         : route('attendances.students.list', ['attendance' => $attendance]);
 @endphp
 
+>>>>>>> 7cfde7274412376bfe0117da5f7625213cc6378a
 <script src="{{ asset('assets/js/html5-qrcode.min.js') }}"></script>
 
 <script src="{{ asset('assets/js/qrcode.min.js') }}"></script>
@@ -88,11 +96,14 @@
 <script>
     document.addEventListener('DOMContentLoaded', function() {
 
+<<<<<<< HEAD
+=======
     const terminalReadOnly = {!! json_encode($terminalReadOnlyFlag) !!};
     const popStudentBaseUrl = {!! json_encode($popStudentBaseUrlValue) !!};
     const refreshAttendanceUrl = {!! json_encode($refreshAttendanceUrlValue) !!};
     const scannerLoadErrorText = {!! json_encode(__('vocab.qr_scanner_load_error')) !!};
 
+>>>>>>> 7cfde7274412376bfe0117da5f7625213cc6378a
         // Get references to the audio elements once the DOM is ready
         const successAudio = document.getElementById('successSound');
         const failureAudio = document.getElementById('failureSound');
@@ -113,11 +124,20 @@
 
         // --- QR Code Scanner Logic (using Html5QrcodeScanner) ---
         const qrCodeSuccessCallback = async (decodedText, decodedResult) => {
+<<<<<<< HEAD
+            if (isProcessing) return;
+            isProcessing = true;
+
+            const url =
+                `{{ route('attendances.popStudent', ['attendance' => $attendance, 'scannedData' => 'REPLACE_ME']) }}`
+                .replace('REPLACE_ME', encodeURIComponent(decodedText));
+=======
             if (terminalReadOnly) return;
             if (isProcessing) return;
             isProcessing = true;
 
             const url = popStudentBaseUrl.replace('REPLACE_ME', encodeURIComponent(decodedText));
+>>>>>>> 7cfde7274412376bfe0117da5f7625213cc6378a
             try {
                 const response = await fetch(url, {
                     method: 'GET',
@@ -157,9 +177,13 @@
 
         async function refreshAttendanceList() {
             try {
+<<<<<<< HEAD
+                const response = await fetch("{{ route('attendances.students.list', ['attendance' => $attendance]) }}", { // prettier-ignore
+=======
                 if (!refreshAttendanceUrl) return;
 
                 const response = await fetch(refreshAttendanceUrl, {
+>>>>>>> 7cfde7274412376bfe0117da5f7625213cc6378a
                     method: 'GET',
                     headers: {
                         'X-Requested-With': 'XMLHttpRequest'
@@ -234,7 +258,11 @@
         }
 
         // Check if the library is loaded
+<<<<<<< HEAD
+        if (typeof Html5QrcodeScanner !== 'undefined') {
+=======
         if (!terminalReadOnly && typeof Html5QrcodeScanner !== 'undefined') {
+>>>>>>> 7cfde7274412376bfe0117da5f7625213cc6378a
             const html5QrcodeScanner = new Html5QrcodeScanner(
                 "qr-reader", // ID of the container element
                 {
@@ -261,6 +289,13 @@
                     startAutoRefreshCheck();
                 }
             });
+<<<<<<< HEAD
+        } else {
+            console.error('html5-qrcode library failed to load.');
+            const errorContainer = document.getElementById('scanner-error'); // Assuming you might add this back
+            errorContainer.textContent = __('vocab.qr_scanner_load_error');
+            errorContainer.classList.remove('hidden'); // Assuming you might add this back
+=======
         } else if (!terminalReadOnly) {
             console.error('html5-qrcode library failed to load.');
             const errorContainer = document.getElementById('scanner-error'); // Assuming you might add this back
@@ -268,6 +303,7 @@
                 errorContainer.textContent = scannerLoadErrorText;
                 errorContainer.classList.remove('hidden'); // Assuming you might add this back
             }
+>>>>>>> 7cfde7274412376bfe0117da5f7625213cc6378a
         }
 
         // --- Share Modal QR Code Logic ---
@@ -278,6 +314,34 @@
 
         let qrCodeInstance = null;
 
+<<<<<<< HEAD
+        shareButton.addEventListener('click', function() {
+            qrModal.classList.remove('hidden');
+
+            qrCodeDiv.innerHTML = "";
+
+            // Generate QR code for current URL
+            qrCodeInstance = new QRCode(qrCodeDiv, {
+                text: window.location.href,
+                width: 300, // increase width
+                height: 300, // increase height
+                colorDark: "#000000",
+                colorLight: "#ffffff",
+                correctLevel: QRCode.CorrectLevel.H
+            });
+        });
+
+        closeQrModal.addEventListener('click', function() {
+            qrModal.classList.add('hidden');
+        });
+
+        // Close modal when clicking outside content
+        qrModal.addEventListener('click', function(e) {
+            if (e.target === qrModal) {
+                qrModal.classList.add('hidden');
+            }
+        });
+=======
         if (shareButton && qrModal && closeQrModal && qrCodeDiv) {
             shareButton.addEventListener('click', function() {
                 qrModal.classList.remove('hidden');
@@ -306,6 +370,7 @@
                 }
             });
         }
+>>>>>>> 7cfde7274412376bfe0117da5f7625213cc6378a
     });
 </script>
 

@@ -155,16 +155,19 @@
         .ltr-center { direction: ltr; text-align: center; }
         .card-body { padding: 2px !important; display: block !important; }
         .qr-code { width: 148px !important; height: 148px !important; }
+            .grid { width: 100%; border-collapse: collapse; table-layout: fixed; }
+        .grid-cell { width: 50%; padding: 3px; vertical-align: top; page-break-inside: avoid; }
+        .grid tr { page-break-inside: avoid; }
     </style>
 </head>
 
 <body>
     <div class="container">
-        <div class="row">
-            {{-- START OF LOOP --}}
-            @foreach ($students as $student)
-            @if ($student->user && $student->classe)
-            <div class="col-6">
+        <table class="grid">
+            @foreach ($students->filter(fn ($s) => $s->user && $s->classe)->chunk(2) as $pair)
+            <tr>
+            @foreach ($pair as $student)
+            <td class="grid-cell">
                 <div class="card">
                     <div class="background-image"></div>
                     <div class="card-body">
@@ -189,11 +192,14 @@
                         </table>
                     </div>
                 </div>
-            </div>
-            @endif
+            </td>
             @endforeach
-            {{-- END OF LOOP --}}
-        </div>
+            @if ($pair->count() < 2)
+            <td class="grid-cell"></td>
+            @endif
+            </tr>
+            @endforeach
+        </table>
     </div>
 </body>
 

@@ -1,48 +1,25 @@
 @props(['student'])
 <div class="card card-primary card-outline printable-card-class student-id-card">
-    <div class="card-body p-2">
-        <div class="row align-items-center">
-            
-            <div class="col-4 d-flex flex-column align-items-center text-center border-end pe-3">
-                
-                <img class="student-img img-thumbnail"
+    <div class="card-body p-1">
+        <div class="row align-items-stretch g-0">
+
+            <div class="col-5 d-flex flex-column align-items-center text-center pe-2">
+                <img class="student-img img-thumbnail rounded-circle"
                     src="{{ $student->studentImage->uri ?? asset('/assets/images/no-image.png') }}"
-                    alt="Student Image" 
+                    alt="Student Image"
                     style="width: 80px; height: 80px; object-fit: cover;">
-                
-                <img class="qr-code" 
-                    src="{{  $student->qrCodeImageUrl() }}" 
-                    alt="QR Code" 
-                    style="width: 100px; height: 100px;">
+
+                <h5 class="mt-2 mb-0 text-primary lh-sm">{{ $student->user->fullName() }}</h5>
+                <div class="fw-semibold">{{ \Illuminate\Support\Str::before($student->user->email, '@') }}</div>
                 <small class="text-muted">{{ $student->user->code }}</small>
             </div>
-            
-            <div class="col-8 ps-3">
-                <h4 class="mb-1 text-primary">
-                    {{ $student->user->fullName() }}
-                </h4>
-                <hr class="mt-1 mb-1">
-                
-                <div class="d-flex justify-content-between mb-2">
-                    <p class="mb-0">
-                        <i class="fas fa-chalkboard-teacher fa-fw me-2 text-success"></i>
-                        {{ $student->classe->classeName() }}
-                    </p>
-                    <p class="mb-0">
-                        <i class="fas fa-sort-numeric-up fa-fw me-2 text-secondary"></i>
-                        {{ $student->num }}
-                    </p>
-                </div>
-                
-                <div class="border-top pt-2">
-                    <p class="mb-1 text-sm">
-                        <i class="fas fa-calendar-alt fa-fw me-2 text-info"></i>
-                        {{ $student->schoolYear() }}
-                    </p>
-                    <p class="mb-0 text-sm">
-                        <i class="fas fa-envelope fa-fw me-2 text-info"></i>
-                        {{ $student->user->email }}
-                    </p>
+
+            <div class="col-7 d-flex flex-column align-items-center justify-content-between p-0">
+                <img class="qr-code" src="{{ $student->qrCodeImageUrl() }}" alt="QR Code"
+                    style="width: 230px; height: 230px;">
+                <div class="d-flex justify-content-between w-100 px-2 fw-semibold">
+                    <span>{{ $student->classe->classeName() }}</span>
+                    <span>{{ $student->schoolYear() }}</span>
                 </div>
             </div>
         </div>

@@ -506,11 +506,8 @@ return  [
     'no_more_seance' => 'Plus de séances dans cette salle aujourd\'hui',
     'qr_scanner_load_error' => 'La bibliothèque du scanner QR n\'a pas pu être chargée. Veuillez réessayer.',
 
-<<<<<<< HEAD
-=======
     'take_image' => 'Prendre une image',
     'capture' => 'Capturer',
     'retake' => 'Reprendre',
     'take_image_description' => 'Prenez une photo avec la webcam et enregistrez-la comme image de profil.',
->>>>>>> 7cfde7274412376bfe0117da5f7625213cc6378a
 ];

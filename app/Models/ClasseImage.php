@@ -23,11 +23,6 @@ use Illuminate\Support\Str;
  */
 class ClasseImage extends AbsenceModel
 {
-<<<<<<< HEAD
-    
-
-=======
->>>>>>> 7cfde7274412376bfe0117da5f7625213cc6378a
 	protected $table = 'ClasseImage';
 
 	protected $fillable = [

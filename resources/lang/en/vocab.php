@@ -504,12 +504,9 @@ return  [
     'next_seance_found' => 'Next seance found',
     'no_more_seance' => 'No more seances in this room today',
     'qr_scanner_load_error' => 'QR Scanner library failed to load. Please try again.',
-<<<<<<< HEAD
-=======
 
     'take_image' => 'Take Image',
     'capture' => 'Capture',
     'retake' => 'Retake',
     'take_image_description' => 'Take a photo from the webcam and save it as your profile image.',
->>>>>>> 7cfde7274412376bfe0117da5f7625213cc6378a
 ];

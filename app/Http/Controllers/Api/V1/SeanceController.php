@@ -434,6 +434,7 @@ class SeanceController extends Controller
 
                 return [
                     'id' => $student->id,
+                    'user_id' => $student->userId,
                     'num' => $student->num,
                     'name' => trim(($user?->firstNameEn ?? $user?->firstName ?? '') . ' ' . ($user?->lastNameEn ?? $user?->lastName ?? '')),
                     'photo_url' => $user?->userImage?->uri,

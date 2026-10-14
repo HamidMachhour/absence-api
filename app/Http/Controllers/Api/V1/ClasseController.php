@@ -284,23 +284,24 @@ class ClasseController extends Controller
                             throw new Exception("Role '{$roleName}' not found for record.");
                         }
 
-                        $user = User::updateOrCreate(
-                            ['email' => $record['email']],
-                            [
-                                'password' => Hash::make($record['password'] ?? 'password'),
-                                'firstName' => $record['first_name'] ?? $record['firstName'],
-                                'lastName' => $record['last_name'] ?? $record['lastName'],
-                                'firstNameFr' => $record['first_name_fr'] ?? $record['firstNameFr'] ?? null,
-                                'lastNameFr' => $record['last_name_fr'] ?? $record['lastNameFr'] ?? null,
-                                'firstNameEn' => $record['first_name_en'] ?? $record['firstNameEn'] ?? null,
-                                'lastNameEn' => $record['last_name_en'] ?? $record['lastNameEn'] ?? null,
-                                'firstNameZ' => $record['first_name_z'] ?? $record['firstNameZ'] ?? null,
-                                'lastNameZ' => $record['last_name_z'] ?? $record['lastNameZ'] ?? null,
-                                'code' => $record['code'] ?? rand(10000, 100000),
-                                'tag_id' => $record['tag_id'] ?? rand(10000, 100000),
-                                'email_verified_at' => now(),
-                            ]
-                        );
+                        $user = User::firstOrNew(['email' => $record['email']]);
+                        if (!$user->exists) {
+                            $user->password = Hash::make($record['password'] ?? 'password');
+                        }
+                        $user->fill([
+                            'firstName' => $record['first_name'] ?? $record['firstName'],
+                            'lastName' => $record['last_name'] ?? $record['lastName'],
+                            'firstNameFr' => $record['first_name_fr'] ?? $record['firstNameFr'] ?? null,
+                            'lastNameFr' => $record['last_name_fr'] ?? $record['lastNameFr'] ?? null,
+                            'firstNameEn' => $record['first_name_en'] ?? $record['firstNameEn'] ?? null,
+                            'lastNameEn' => $record['last_name_en'] ?? $record['lastNameEn'] ?? null,
+                            'firstNameZ' => $record['first_name_z'] ?? $record['firstNameZ'] ?? null,
+                            'lastNameZ' => $record['last_name_z'] ?? $record['lastNameZ'] ?? null,
+                            'code' => $record['code'] ?? rand(10000, 100000),
+                            'tag_id' => $record['tag_id'] ?? rand(10000, 100000),
+                            'email_verified_at' => now(),
+                        ]);
+                        $user->save();
 
                         // 2. Assign the role to the user if it doesn't exist
                         UserRole::firstOrCreate(

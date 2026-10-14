@@ -217,7 +217,7 @@ class Student extends AbsenceModel
         $qrCodeDirectory = public_path('assets/images/qrcodes/');
 
         // Use a hash of the data to create a unique filename.
-        $filename = md5($dataToEncode) . '.svg';
+        $filename = md5($dataToEncode) . '-m1.svg';
         $qrCodeImagePath = $qrCodeDirectory . $filename;
 
         // Ensure the directory exists
@@ -228,7 +228,7 @@ class Student extends AbsenceModel
         // Generate the QR code only if the file doesn't exist
         if (!file_exists($qrCodeImagePath)) {
             $renderer = new ImageRenderer(
-                new RendererStyle(400),
+                new RendererStyle(400, 1),
                 new SvgImageBackEnd()
             );
             $writer = new Writer($renderer);
@@ -256,7 +256,7 @@ class Student extends AbsenceModel
         ]);
 
         // Use a hash of the data to create a unique filename.
-        $filename = md5($dataToEncode) . '.svg';
+        $filename = md5($dataToEncode) . '-m1.svg';
         $relativePath = 'assets/images/qrcodes/' . $filename;
 
         // Ensure the file exists by calling the shared creation method

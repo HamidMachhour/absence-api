@@ -176,6 +176,14 @@
                 break-inside: avoid;
             }
         }
+    
+        .layout { width: 100%; border-collapse: collapse; }
+        .left-cell { width: 36%; text-align: center; vertical-align: middle; padding: 0; }
+        .right-cell { width: 64%; text-align: center; vertical-align: middle; padding: 0; }
+        .name { font-size: 13px; font-weight: bold; }
+        .ltr-center { direction: ltr; text-align: center; }
+        .card-body { padding: 2px !important; display: block !important; }
+        .qr-code { width: 148px !important; height: 148px !important; }
     </style>
 </head>
 
@@ -187,31 +195,25 @@
                 <div class="card">
                     <div class="background-image"></div>
                     <div class="card-body">
-                        <div class="card-top">
-                            <div class="card-top-row">
-                                <!-- QR Code -->
-                                <div class="card-top-cell" style="width: 33.33%;">
-                                    <img class="qr-code" src="{{ $student->qrCodeBase64 }}" alt="QRCode" />
-                                </div>
-                                <!-- Code, Section, Number -->
-                                <div class="card-top-cell" style="width: 33.33%;">
-                                    <p class="info code">{{ $student->user->code }}</p>
-                                    <p class="info"><br>{{ $student->al9ism}}</p>
-                                    <p class="info">{{ $student->ara9m}}</p>
-                                </div>
-                                <!-- Student Image and Name -->
-                                <div class="card-top-cell" style="width: 33.33%;">
+                        <table class="layout">
+                            <tr>
+                                <td class="left-cell">
                                     <img class="student-img" src="{{ $student->studentImageBase64 }}" alt="Student Image">
-                                    <p class="info">
-                                        {{ $student->fullName }}
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-                        <!-- Bottom Info -->
-                        <div class="card-bottom">
-                            <p class="info m-0 ltr ">{{ $student->user->email .'    '.$student->schoolYear() }}</p>
-                        </div>
+                                    <p class="info name">{{ $student->fullName }}</p>
+                                    <p class="info ltr-center">{{ \Illuminate\Support\Str::before($student->user->email, '@') }}</p>
+                                    <p class="info code">{{ $student->user->code }}</p>
+                                </td>
+                                <td class="right-cell">
+                                    <img class="qr-code" src="{{ $student->qrCodeBase64 }}" alt="QRCode" />
+                                    <table class="layout">
+                                        <tr>
+                                            <td class="info">{{ $student->al9ism }}</td>
+                                            <td class="info ltr-center">{{ $student->schoolYear() }}</td>
+                                        </tr>
+                                    </table>
+                                </td>
+                            </tr>
+                        </table>
                     </div>
                 </div>
             </div>
